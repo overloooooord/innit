@@ -1,0 +1,444 @@
+/* =====================================================
+   inVision U — styles.css
+   =====================================================
+   Sections:
+   1.  CSS Variables
+   2.  Reset & Base
+   3.  Background orbs animation
+   4.  App shell
+   5.  Glass card
+   6.  Header
+   7.  Buttons
+   8.  Screen system (SPA)
+   9.  Landing / Hero
+   10. Auth cards (register, login)
+   11. Form elements (inputs, textarea, select)
+   12. Application form (5 blocks)
+   13. Block 2-3: experience / essay fields
+   14. Block 4: psychometric radio questions
+   15. Block 5: consent checkboxes
+   16. Results screen (JSON viewer)
+   17. Utilities
+   18. Responsive
+   ===================================================== */
+
+/* ── 1. Variables ────────────────────────────────────── */
+:root {
+  --clr-bg:           #05060f;
+  --clr-glass:        rgba(255,255,255,0.04);
+  --clr-glass-border: rgba(255,255,255,0.10);
+  --clr-primary:      #7c6af5;
+  --clr-primary-2:    #a06bf7;
+  --clr-accent-1:     #5eead4;
+  --clr-accent-2:     #f472b6;
+  --clr-text:         #e2e8f0;
+  --clr-text-muted:   #94a3b8;
+  --clr-text-dim:     #475569;
+  --radius-sm:  8px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+  --shadow-card: 0 8px 40px rgba(0,0,0,0.4);
+  --ease:        cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* ── 2. Reset ─────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: 'Inter', sans-serif;
+  background: var(--clr-bg);
+  color: var(--clr-text);
+  min-height: 100vh;
+  overflow-x: hidden;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── 3. Background orbs ──────────────────────────────── */
+.bg-orbs { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+.orb { position: absolute; border-radius: 50%; filter: blur(80px); opacity: 0.20; animation: drift 20s infinite alternate ease-in-out; }
+.orb-1 { width: 600px; height: 600px; background: radial-gradient(circle,#7c6af5,transparent 70%); top: -200px; left: -200px; animation-duration: 22s; }
+.orb-2 { width: 500px; height: 500px; background: radial-gradient(circle,#5eead4,transparent 70%); bottom: -150px; right: -150px; animation-duration: 18s; animation-delay: -8s; }
+.orb-3 { width: 400px; height: 400px; background: radial-gradient(circle,#f472b6,transparent 70%); top: 40%; left: 50%; animation-duration: 25s; animation-delay: -15s; }
+@keyframes drift { 0% { transform: translate(0,0); } 50% { transform: translate(30px,-25px); } 100% { transform: translate(-20px,40px); } }
+
+/* ── 4. App shell ─────────────────────────────────────── */
+.app-shell { position: relative; z-index: 1; min-height: 100vh; display: flex; flex-direction: column; }
+
+/* ── 5. Glass card ────────────────────────────────────── */
+.glass-card {
+  background: var(--clr-glass);
+  border: 1px solid var(--clr-glass-border);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+}
+
+/* ── 6. Header ────────────────────────────────────────── */
+.header {
+  position: sticky; top: 0; z-index: 100;
+  height: 64px; padding: 0 2rem;
+  display: flex; align-items: center;
+  background: rgba(5,6,15,0.85);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--clr-glass-border);
+}
+.header-inner { width: 100%; max-width: 1100px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; }
+.logo          { display: flex; align-items: center; gap: 10px; cursor: pointer; }
+.logo-icon     { font-size: 1.5rem; }
+.logo-text     { font-family: 'Outfit',sans-serif; font-size: 1.2rem; font-weight: 700; letter-spacing: -0.5px; }
+.logo-accent   { color: var(--clr-primary); }
+.header-actions { display: flex; gap: 12px; }
+.header-user    { display: flex; align-items: center; gap: 12px; }
+.user-greeting  { font-size: 0.875rem; color: var(--clr-text-muted); }
+
+/* ── 7. Buttons ───────────────────────────────────────── */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 10px 22px; border-radius: var(--radius-md);
+  font-family: 'Inter',sans-serif; font-size: 0.9rem; font-weight: 600;
+  cursor: pointer; border: none; outline: none;
+  transition: all 0.2s var(--ease); text-decoration: none;
+}
+.btn:active { transform: scale(0.97); }
+.btn-primary { background: linear-gradient(135deg,var(--clr-primary),var(--clr-primary-2)); color: #fff; box-shadow: 0 4px 20px rgba(124,106,245,0.35); }
+.btn-primary:hover { box-shadow: 0 6px 28px rgba(124,106,245,0.5); transform: translateY(-1px); }
+.btn-ghost   { background: transparent; color: var(--clr-text-muted); border: 1px solid var(--clr-glass-border); }
+.btn-ghost:hover { color: var(--clr-text); border-color: rgba(255,255,255,0.3); }
+.btn-full { width: 100%; }
+.btn-lg   { padding: 14px 32px; font-size: 1rem; }
+.btn-sm   { padding: 6px 14px;  font-size: 0.8rem; }
+.btn-arrow { transition: transform 0.2s var(--ease); }
+.btn:hover .btn-arrow { transform: translateX(4px); }
+@keyframes pulse-ring {
+  0%   { box-shadow: 0 4px 20px rgba(124,106,245,0.35), 0 0 0 0   rgba(124,106,245,0.4); }
+  70%  { box-shadow: 0 4px 20px rgba(124,106,245,0.35), 0 0 0 16px rgba(124,106,245,0); }
+  100% { box-shadow: 0 4px 20px rgba(124,106,245,0.35), 0 0 0 0   rgba(124,106,245,0); }
+}
+.pulse-btn { animation: pulse-ring 2.5s infinite; }
+.pulse-btn:hover { animation: none; }
+
+/* ── 8. Screen system ─────────────────────────────────── */
+/* All screens hidden by default; JS adds .active to current one */
+.screen {
+  display: none; flex: 1; align-items: center; justify-content: center;
+  padding: 2rem;
+  animation: fadeSlideIn 0.35s var(--ease) both;
+}
+.screen.active { display: flex; }
+@keyframes fadeSlideIn { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+
+/* ── 9. Landing / Hero ────────────────────────────────── */
+.hero { max-width: 680px; text-align: center; padding: 3rem 0; }
+.hero-badge {
+  display: inline-block; padding: 6px 16px;
+  background: rgba(124,106,245,0.12); border: 1px solid rgba(124,106,245,0.3);
+  border-radius: 999px; font-size: 0.8rem; font-weight: 600;
+  color: var(--clr-primary); letter-spacing: 0.5px; margin-bottom: 1.5rem;
+}
+.hero-title {
+  font-family: 'Outfit',sans-serif;
+  font-size: clamp(2rem,5vw,3.2rem); font-weight: 800;
+  line-height: 1.15; letter-spacing: -1.5px; margin-bottom: 1.25rem;
+}
+.gradient-text {
+  background: linear-gradient(135deg,var(--clr-primary),var(--clr-accent-1),var(--clr-accent-2));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text; background-size: 200%; animation: gradientShift 4s ease infinite;
+}
+@keyframes gradientShift { 0%,100%{background-position:0% 50%;} 50%{background-position:100% 50%;} }
+.hero-subtitle { font-size:1rem; color:var(--clr-text-muted); max-width:520px; margin:0 auto 2rem; line-height:1.7; }
+.hero-cta { margin-bottom: 2.5rem; }
+.cta-note { margin-top: 12px; font-size: 0.8rem; color: var(--clr-text-dim); }
+.hero-stats { display:flex; justify-content:center; gap:1.25rem; flex-wrap:wrap; }
+.stat-card {
+  display:flex; flex-direction:column; align-items:center;
+  padding:14px 24px; background:var(--clr-glass); border:1px solid var(--clr-glass-border);
+  border-radius:var(--radius-md); backdrop-filter:blur(12px);
+  min-width:80px; transition: transform 0.2s var(--ease-bounce);
+}
+.stat-card:hover { transform:translateY(-4px); }
+.stat-num {
+  font-family:'Outfit',sans-serif; font-size:1.7rem; font-weight:800;
+  background:linear-gradient(135deg,var(--clr-primary),var(--clr-accent-1));
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+}
+.stat-label { font-size:0.72rem; color:var(--clr-text-muted); font-weight:500; margin-top:2px; }
+
+/* ── 10. Auth cards ───────────────────────────────────── */
+.auth-card { width:100%; max-width:420px; padding:2.5rem; }
+.auth-header { text-align:center; margin-bottom:2rem; }
+.auth-icon   { font-size:2.5rem; display:block; margin-bottom:0.75rem; }
+.auth-header h2 { font-family:'Outfit',sans-serif; font-size:1.6rem; font-weight:700; margin-bottom:4px; }
+.auth-header p  { color:var(--clr-text-muted); font-size:0.9rem; }
+.auth-switch    { text-align:center; margin-top:1.25rem; font-size:0.875rem; color:var(--clr-text-muted); }
+.auth-switch a  { color:var(--clr-primary); text-decoration:none; font-weight:600; }
+.auth-switch a:hover { color:var(--clr-primary-2); }
+
+/* ── 11. Form base elements ───────────────────────────── */
+.form-group        { display:flex; flex-direction:column; gap:6px; margin-bottom:1.25rem; }
+.form-group label  { font-size:0.78rem; font-weight:600; color:var(--clr-text-muted); text-transform:uppercase; letter-spacing:0.5px; }
+
+/* Shared input / textarea / select styles */
+input[type="text"],
+input[type="email"],
+input[type="tel"],
+input[type="number"],
+input[type="password"],
+textarea,
+select {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid var(--clr-glass-border);
+  border-radius: var(--radius-sm);
+  padding: 12px 16px;
+  color: var(--clr-text);
+  font-family: 'Inter',sans-serif;
+  font-size: 0.95rem;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  width: 100%;
+}
+input::placeholder, textarea::placeholder { color: var(--clr-text-dim); }
+input:focus, textarea:focus, select:focus {
+  border-color: var(--clr-primary);
+  box-shadow: 0 0 0 3px rgba(124,106,245,0.2);
+}
+/* Native select arrow colours */
+select { cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%2394a3b8' d='M1 1l5 5 5-5'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; padding-right: 36px; }
+select option { background: #0d0f1e; color: var(--clr-text); }
+
+textarea { resize: vertical; min-height: 100px; }
+
+/* Two fields side-by-side */
+.field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+
+.form-error {
+  background: rgba(239,68,68,0.10); border: 1px solid rgba(239,68,68,0.3);
+  border-radius: var(--radius-sm); padding: 10px 14px;
+  color: #fc8181; font-size: 0.85rem; margin-bottom: 1rem;
+}
+.spinner {
+  display:inline-block; width:16px; height:16px;
+  border:2px solid rgba(255,255,255,0.3); border-top-color:#fff;
+  border-radius:50%; animation:spin 0.7s linear infinite;
+}
+@keyframes spin { to { transform:rotate(360deg); } }
+
+/* ── 12. Application form wrapper & progress ──────────── */
+/* The screen-form needs to scroll because blocks can be long */
+#screen-form {
+  align-items: flex-start;
+  padding-top: 2rem;
+  padding-bottom: 3rem;
+  overflow-y: auto;
+}
+
+.form-wrapper {
+  width: 100%;
+  max-width: 780px;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.form-progress-bar { display:flex; align-items:center; gap:1rem; }
+.progress-track { flex:1; height:6px; background:rgba(255,255,255,0.08); border-radius:999px; overflow:hidden; }
+.progress-fill  { height:100%; background:linear-gradient(90deg,var(--clr-primary),var(--clr-accent-1)); border-radius:999px; transition:width 0.4s var(--ease); width:20%; }
+.progress-label { font-size:0.8rem; color:var(--clr-text-muted); white-space:nowrap; font-weight:500; }
+
+/* The block card — slides in from right on block change */
+.form-block-card {
+  padding: 2.5rem;
+  animation: slideCard 0.4s var(--ease-bounce) both;
+}
+@keyframes slideCard { from { opacity:0; transform:translateX(30px); } to { opacity:1; transform:translateX(0); } }
+
+.block-header { margin-bottom: 1.75rem; }
+.block-label  { font-family:'Outfit',sans-serif; font-size:0.85rem; font-weight:700; color:var(--clr-primary); background:rgba(124,106,245,0.12); border:1px solid rgba(124,106,245,0.25); padding:3px 12px; border-radius:999px; display:inline-block; margin-bottom:8px; }
+.block-subtitle { font-family:'Outfit',sans-serif; font-size:1.4rem; font-weight:700; }
+
+.block-fields { display:flex; flex-direction:column; }
+
+.block-nav { display:flex; justify-content:space-between; align-items:center; margin-top:2rem; }
+
+/* ── 13. Essay fields ─────────────────────────────────── */
+.essay-field { }
+.essay-hint  { font-size:0.78rem; color:var(--clr-primary); font-weight:500; margin-bottom:6px; }
+.word-count  { font-size:0.75rem; color:var(--clr-text-muted); margin-top:6px; text-align:right; transition:color 0.3s; }
+
+/* "required" star */
+.required-star { color: var(--clr-accent-2); margin-left:2px; }
+
+/* ── 14. Psychometric: radio questions ────────────────── */
+/* Each question is a card with a number, text, and 4 options */
+.psycho-question {
+  padding: 1.5rem;
+  margin-bottom: 1rem;
+  border: 1px solid var(--clr-glass-border);
+  border-radius: var(--radius-md);
+  background: rgba(255,255,255,0.02);
+  transition: border-color 0.2s;
+}
+.psycho-question:hover { border-color: rgba(124,106,245,0.3); }
+
+.psycho-q-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 1rem;
+}
+
+/* Question number badge */
+.psycho-num {
+  display: flex; align-items: center; justify-content: center;
+  min-width: 28px; height: 28px;
+  background: rgba(124,106,245,0.15);
+  border: 1px solid rgba(124,106,245,0.3);
+  border-radius: 6px;
+  font-size: 0.75rem; font-weight: 700; color: var(--clr-primary);
+  flex-shrink: 0; margin-top: 2px;
+}
+
+.psycho-text {
+  font-size: 1rem; font-weight: 500; line-height: 1.45;
+  color: var(--clr-text);
+}
+
+.psycho-options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Each radio option row */
+.radio-option {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--clr-glass-border);
+  background: rgba(255,255,255,0.02);
+  cursor: pointer;
+  transition: all 0.2s var(--ease);
+  user-select: none;
+}
+.radio-option:hover { border-color: rgba(124,106,245,0.4); background: rgba(124,106,245,0.06); }
+
+/* Highlighted when selected */
+.radio-option.selected {
+  border-color: var(--clr-primary);
+  background: rgba(124,106,245,0.12);
+}
+
+/* Hide native radio input */
+.radio-option input[type="radio"] { display: none; }
+
+/* Custom circle indicator */
+.radio-circle {
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  border: 2px solid var(--clr-glass-border);
+  flex-shrink: 0;
+  transition: all 0.2s;
+  position: relative;
+}
+.radio-option.selected .radio-circle {
+  border-color: var(--clr-primary);
+  background: var(--clr-primary);
+  box-shadow: 0 0 8px rgba(124,106,245,0.5);
+}
+.radio-option.selected .radio-circle::after {
+  content: '';
+  position: absolute;
+  inset: 3px;
+  border-radius: 50%;
+  background: #fff;
+}
+
+.radio-label { font-size: 0.9rem; color: var(--clr-text-muted); line-height: 1.4; }
+.radio-option.selected .radio-label { color: var(--clr-text); }
+
+/* ── 15. Consent checkboxes ───────────────────────────── */
+.consents-block { display: flex; flex-direction: column; gap: 1.25rem; }
+
+.consents-intro {
+  font-size: 0.9rem; color: var(--clr-text-muted);
+  line-height: 1.6; padding: 1rem;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid var(--clr-glass-border);
+  border-radius: var(--radius-sm);
+}
+
+.checkbox-option {
+  display: flex; align-items: flex-start; gap: 14px;
+  padding: 16px; cursor: pointer;
+  border: 1px solid var(--clr-glass-border); border-radius: var(--radius-md);
+  background: rgba(255,255,255,0.02);
+  transition: all 0.2s var(--ease);
+  user-select: none;
+}
+.checkbox-option:hover { border-color: rgba(124,106,245,0.4); background: rgba(124,106,245,0.05); }
+.checkbox-option input[type="checkbox"] { display: none; }
+
+.checkbox-box {
+  width: 22px; height: 22px; flex-shrink: 0;
+  border: 2px solid var(--clr-glass-border); border-radius: 6px;
+  transition: all 0.2s; position: relative; margin-top: 2px;
+}
+.checkbox-option input:checked + .checkbox-box {
+  background: var(--clr-primary); border-color: var(--clr-primary);
+  box-shadow: 0 0 10px rgba(124,106,245,0.4);
+}
+.checkbox-option input:checked + .checkbox-box::after {
+  content: '✓'; position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  color: #fff; font-size: 13px; font-weight: 700;
+}
+.checkbox-label { font-size: 0.9rem; color: var(--clr-text-muted); line-height: 1.5; }
+.checkbox-option input:checked ~ .checkbox-label { color: var(--clr-text); }
+
+/* ── 16. Results (JSON viewer) ────────────────────────── */
+.results-wrapper { width:100%; max-width:800px; display:flex; flex-direction:column; gap:2rem; }
+.results-header  { text-align: center; }
+.results-trophy  { font-size:3rem; display:block; margin-bottom:0.75rem; animation:bounceIn 0.6s var(--ease-bounce) both; }
+@keyframes bounceIn { from{opacity:0;transform:scale(0.3);} 60%{transform:scale(1.1);} to{opacity:1;transform:scale(1);} }
+.results-title   { font-family:'Outfit',sans-serif; font-size:1.8rem; font-weight:800; margin-bottom:4px; }
+.results-subtitle{ color:var(--clr-text-muted); font-size:0.9rem; }
+
+.json-viewer { overflow: hidden; }
+.json-viewer-header { display:flex; align-items:center; justify-content:space-between; padding:14px 20px; border-bottom:1px solid var(--clr-glass-border); }
+.json-label { font-size:0.85rem; font-weight:600; color:var(--clr-text-muted); }
+
+/* The pre element with the formatted JSON */
+#json-output {
+  padding: 20px;
+  overflow-x: auto;
+  font-family: 'Courier New', monospace;
+  font-size: 0.82rem;
+  line-height: 1.7;
+  color: var(--clr-accent-1);
+  white-space: pre;
+  max-height: 500px;
+  overflow-y: auto;
+}
+
+.results-actions { display:flex; justify-content:center; gap:1rem; flex-wrap:wrap; }
+
+/* ── 17. Utilities ────────────────────────────────────── */
+.hidden { display: none !important; }
+
+/* ── 18. Responsive ───────────────────────────────────── */
+@media (max-width: 640px) {
+  .header          { padding: 0 1rem; }
+  .screen          { padding: 1rem; }
+  .auth-card       { padding: 1.5rem 1.25rem; }
+  .form-block-card { padding: 1.5rem 1.25rem; }
+  .field-row       { grid-template-columns: 1fr; }
+  .block-nav       { flex-direction: column-reverse; gap: 10px; }
+  .block-nav .btn  { width: 100%; }
+  .hero-stats      { gap: 0.75rem; }
+  .form-progress-bar { flex-direction: column; align-items: flex-start; }
+}

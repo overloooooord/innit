@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>inVision U — Admission Form</title>
+  <meta name="description" content="Подай заявку в inVision U — заполни 5-блочную анкету и получи подтверждение в JSON." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body>
+
+  <!-- Анимированные фоновые орбы (CSS-анимация) -->
+  <div class="bg-orbs">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+  </div>
+
+  <div class="app-shell">
+
+    <!-- ══ ШАПКА ══════════════════════════════════════════════════ -->
+    <header class="header">
+      <div class="header-inner">
+
+        <div class="logo" id="logo" tabindex="0" role="button" aria-label="На главную">
+          <span class="logo-icon">🎓</span>
+          <span class="logo-text">inVision<span class="logo-accent">U</span></span>
+        </div>
+
+        <!-- Кнопки когда НЕ залогинен -->
+        <div class="header-actions" id="header-actions">
+          <button class="btn btn-ghost"   id="btn-show-login">Войти</button>
+          <button class="btn btn-primary" id="btn-show-register">Подать заявку</button>
+        </div>
+
+        <!-- Имя пользователя + выход когда залогинен -->
+        <div class="header-user hidden" id="header-user">
+          <span class="user-greeting" id="greeting-name"></span>
+          <button class="btn btn-ghost btn-sm" id="btn-logout">Выйти</button>
+        </div>
+
+      </div>
+    </header>
+
+    <!-- ══ ЭКРАН 1: ГЛАВНАЯ ════════════════════════════════════════ -->
+    <section class="screen active" id="screen-landing">
+      <div class="hero">
+        <div class="hero-badge">✨ Программа отбора 2026</div>
+        <h1 class="hero-title">
+          Поступи в<br />
+          <span class="gradient-text">inVision U</span>
+        </h1>
+        <p class="hero-subtitle">
+          Заполни анкету из 5 блоков: личная информация, опыт, эссе,
+          психометрический тест и согласия. Все ответы сохраняются в базе данных
+          и возвращаются в формате JSON.
+        </p>
+        <div class="hero-cta">
+          <button class="btn btn-primary btn-lg pulse-btn" id="hero-start-btn">
+            Подать заявку <span class="btn-arrow">→</span>
+          </button>
+          <p class="cta-note">Бесплатно · ~20–30 минут · Данные защищены</p>
+        </div>
+        <div class="hero-stats">
+          <div class="stat-card"><span class="stat-num">5</span><span class="stat-label">Блоков</span></div>
+          <div class="stat-card"><span class="stat-num">40</span><span class="stat-label">Тест</span></div>
+          <div class="stat-card"><span class="stat-num">JSON</span><span class="stat-label">Вывод</span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══ ЭКРАН 2: РЕГИСТРАЦИЯ ════════════════════════════════════ -->
+    <section class="screen" id="screen-register">
+      <div class="auth-card glass-card">
+        <div class="auth-header">
+          <span class="auth-icon">🚀</span>
+          <h2>Создать аккаунт</h2>
+          <p>Зарегистрируйся, чтобы подать заявку</p>
+        </div>
+        <form id="register-form" novalidate>
+          <div class="form-group">
+            <label for="reg-username">Имя (для аккаунта)</label>
+            <input type="text"     id="reg-username" placeholder="Иван Иванов"     autocomplete="name"         required />
+          </div>
+          <div class="form-group">
+            <label for="reg-email">Email</label>
+            <input type="email"    id="reg-email"    placeholder="ivan@example.com" autocomplete="email"        required />
+          </div>
+          <div class="form-group">
+            <label for="reg-password">Пароль</label>
+            <input type="password" id="reg-password" placeholder="Минимум 6 символов" autocomplete="new-password" required />
+          </div>
+          <div class="form-error hidden" id="register-error"></div>
+          <button type="submit" class="btn btn-primary btn-full" id="register-submit">
+            <span class="btn-text">Зарегистрироваться</span>
+            <span class="spinner hidden" id="register-spinner"></span>
+          </button>
+        </form>
+        <p class="auth-switch">Уже есть аккаунт? <a href="#" id="switch-to-login">Войти</a></p>
+      </div>
+    </section>
+
+    <!-- ══ ЭКРАН 3: ВХОД ═══════════════════════════════════════════ -->
+    <section class="screen" id="screen-login">
+      <div class="auth-card glass-card">
+        <div class="auth-header">
+          <span class="auth-icon">🔑</span>
+          <h2>Вход</h2>
+          <p>Войди, чтобы продолжить</p>
+        </div>
+        <form id="login-form" novalidate>
+          <div class="form-group">
+            <label for="login-email">Email</label>
+            <input type="email"    id="login-email"    placeholder="ivan@example.com" autocomplete="email"            required />
+          </div>
+          <div class="form-group">
+            <label for="login-password">Пароль</label>
+            <input type="password" id="login-password" placeholder="Твой пароль"      autocomplete="current-password" required />
+          </div>
+          <div class="form-error hidden" id="login-error"></div>
+          <button type="submit" class="btn btn-primary btn-full" id="login-submit">
+            <span class="btn-text">Войти</span>
+            <span class="spinner hidden" id="login-spinner"></span>
+          </button>
+        </form>
+        <p class="auth-switch">Нет аккаунта? <a href="#" id="switch-to-register">Зарегистрироваться</a></p>
+      </div>
+    </section>
+
+    <!-- ══ ЭКРАН 4: ФОРМА ЗАЯВКИ (5 блоков) ═══════════════════════ -->
+    <!--
+      Это основной экран.
+      app.js рендерит блоки динамически внутри #block-fields.
+      Навигация: "Назад" / "Следующий блок →" / "Отправить заявку ✓"
+    -->
+    <section class="screen" id="screen-form">
+      <div class="form-wrapper">
+
+        <!-- Прогресс-бар вверху -->
+        <div class="form-progress-bar">
+          <div class="progress-track">
+            <div class="progress-fill" id="form-progress-fill"></div>
+          </div>
+          <span class="progress-label" id="form-progress-label">Блок 1 / 5 блоков</span>
+        </div>
+
+        <!-- Карточка текущего блока -->
+        <div class="form-block-card glass-card" id="form-block-card">
+
+          <!-- Заголовок блока (меняется через JS) -->
+          <div class="block-header">
+            <span class="block-label" id="block-title">Блок 1</span>
+            <h2 class="block-subtitle" id="block-subtitle">Базовая информация</h2>
+          </div>
+
+          <!-- Сюда JS вставляет поля текущего блока -->
+          <div class="block-fields" id="block-fields"></div>
+
+          <!-- Кнопки навигации -->
+          <div class="block-nav">
+            <button class="btn btn-ghost"   id="btn-form-prev" disabled>← Назад</button>
+            <button class="btn btn-primary" id="btn-form-next">Следующий блок →</button>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ══ ЭКРАН 5: РЕЗУЛЬТАТ ══════════════════════════════════════ -->
+    <!--
+      После успешной отправки бэкенд возвращает JSON.
+      Мы показываем его здесь без какого-либо анализа.
+    -->
+    <section class="screen" id="screen-results">
+      <div class="results-wrapper">
+
+        <div class="results-header">
+          <span class="results-trophy">✅</span>
+          <h2 class="results-title">Заявка отправлена!</h2>
+          <p class="results-subtitle" id="results-subtitle">Данные сохранены в базе данных.</p>
+        </div>
+
+        <!-- JSON-вьювер: показывает ответ бэкенда -->
+        <div class="json-viewer glass-card">
+          <div class="json-viewer-header">
+            <span class="json-label">📦 Ответ сервера (JSON)</span>
+            <button class="btn btn-ghost btn-sm" id="btn-copy-json">Copy</button>
+          </div>
+          <!-- app.js заполняет этот элемент отформатированным JSON -->
+          <pre id="json-output"></pre>
+        </div>
+
+        <div class="results-actions">
+          <button class="btn btn-primary btn-lg" id="btn-retake">Заполнить заново</button>
+          <button class="btn btn-ghost   btn-lg" id="btn-home">На главную</button>
+        </div>
+
+      </div>
+    </section>
+
+  </div><!-- .app-shell -->
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
