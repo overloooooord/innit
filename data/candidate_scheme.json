@@ -1,0 +1,52 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "InVision U Candidate Profile",
+  "description": "Schema for candidate applications to InVision U. Demographic fields are for informational display only and MUST NOT be used in scoring.",
+  "type": "object",
+  "required": ["id", "personal", "education", "experience", "essay", "motivation", "self_assessment"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Unique candidate identifier (anonymized)"
+    },
+    "personal": {
+      "type": "object",
+      "description": "Personal info — shown to commission but NOT used in scoring",
+      "required": ["name", "age"],
+      "properties": {
+        "name": { "type": "string" },
+        "age": { "type": "integer", "minimum": 14, "maximum": 25 },
+        "city": { "type": "string" },
+        "region": { "type": "string" },
+        "school_type": {
+          "type": "string",
+          "enum": ["general", "lyceum", "gymnasium", "specialized", "homeschool", "college", "other"]
+        },
+        "has_mentor": { "type": "boolean" },
+        "languages": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "education": {
+      "type": "object",
+      "required": ["gpa"],
+      "properties": {
+        "gpa": { "type": "number", "minimum": 0, "maximum": 5.0 },
+        "favorite_subjects": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "olympiads": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": { "type": "string" },
+              "level": { "type": "string", "enum": ["school", "city", "regional", "national", "international"] },
+              "result": { "type": "string" },
+              "year": { "type": "integer" }
+            }
+          }
+        }}}}}
