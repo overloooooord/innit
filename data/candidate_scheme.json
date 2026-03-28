@@ -42,11 +42,142 @@
           "type": "array",
           "items": {
             "type": "object",
+            "required": ["subject", "level", "result", "year"],
             "properties": {
-              "name": { "type": "string" },
-              "level": { "type": "string", "enum": ["school", "city", "regional", "national", "international"] },
-              "result": { "type": "string" },
+              "subject": { "type": "string" },
+              "level": {
+                "type": "string",
+                "enum": ["school", "city", "regional", "national", "international"]
+              },
+              "result": {
+                "type": "string",
+                "enum": ["participant", "honorable_mention", "prize"]
+              },
               "year": { "type": "integer" }
             }
           }
-        }}}}}
+        },
+        "courses": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name", "platform", "completed"],
+            "properties": {
+              "name": { "type": "string" },
+              "platform": { "type": "string" },
+              "completed": { "type": "boolean" }
+            }
+          }
+        }
+      }
+    },
+
+    "experience": {
+      "type": "object",
+      "properties": {
+        "projects": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name", "type", "role", "year"],
+            "properties": {
+              "name": { "type": "string" },
+              "type": {
+                "type": "string",
+                "enum": ["technical", "social", "media", "business", "education", "other"]
+              },
+              "role": {
+                "type": "string",
+                "enum": ["founder", "co_founder", "participant", "volunteer"]
+              },
+              "year": { "type": "integer" },
+              "is_active": { "type": "boolean" },
+              "team_size": { "type": "integer", "minimum": 1 },
+              "description": { "type": "string" }
+            }
+          }
+        },
+        "volunteering": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "leadership_roles": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+
+    "motivation": {
+      "type": "object",
+      "required": ["text"],
+      "properties": {
+        "text": {
+          "type": "string",
+          "minLength": 50,
+          "description": "Free-text answer: why InVision U?"
+        }
+      }
+    },
+
+    "essay": {
+      "type": "object",
+      "required": ["topic", "text", "word_count"],
+      "properties": {
+        "topic": { "type": "string" },
+        "text": {
+          "type": "string",
+          "description": "Essay text, minimum 200 words"
+        },
+        "word_count": { "type": "integer", "minimum": 150 }
+      }
+    },
+
+    "self_assessment": {
+      "type": "object",
+      "description": "Optional self-assessment on 1-5 scale. Used as additional signal, cross-validated against actual achievements.",
+      "properties": {
+        "leadership": { "type": "integer", "minimum": 1, "maximum": 5 },
+        "teamwork": { "type": "integer", "minimum": 1, "maximum": 5 },
+        "creativity": { "type": "integer", "minimum": 1, "maximum": 5 },
+        "persistence": { "type": "integer", "minimum": 1, "maximum": 5 },
+        "communication": { "type": "integer", "minimum": 1, "maximum": 5 }
+      }
+    },
+
+    "bot_metadata": {
+      "type": "object",
+      "description": "Automatically collected by Telegram bot — candidate does not see this",
+      "properties": {
+        "session_duration_sec": { "type": "integer" },
+        "total_messages": { "type": "integer" },
+        "essay_typing_duration_sec": { "type": "integer" },
+        "voice_message_duration_sec": { "type": "integer" },
+        "started_at": { "type": "string", "format": "date-time" },
+        "completed_at": { "type": "string", "format": "date-time" },
+        "pauses": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "after_state": { "type": "string" },
+              "duration_sec": { "type": "integer" }
+            }
+          }
+        },
+        "referral_source": { "type": "string" },
+        "funnel_stage": {
+          "type": "string",
+          "enum": ["started", "education_done", "projects_done", "essay_done", "completed", "abandoned"],
+          "description": "How far the candidate got in the bot flow"
+        }
+      }
+    },
+
+    "label": {
+      "type": "string",
+      "enum": ["shortlist", "maybe", "reject"],
+      "description": "Human annotation — only present in training dataset, never in production"
+    }
+  }
+}
