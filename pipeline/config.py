@@ -65,7 +65,6 @@ XGBOOST_PARAMS = {
     "num_class": 3,
     "eval_metric": "mlogloss",
     "random_state": 42,
-    "use_label_encoder": False,
 }
 
 MODEL_PATH = "models/model.pkl"
