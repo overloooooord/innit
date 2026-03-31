@@ -1,14 +1,3 @@
-"""
-InVision U ML Pipeline — Fairness Audit
-==========================================
-Verifies that the model does not discriminate based on demographic
-attributes that are intentionally excluded from the feature vector.
-
-Checks: city, region, school_type, has_mentor, age.
-These fields are shown to the commission for context but MUST NOT
-systematically influence the model's predictions.
-"""
-
 import json
 import os
 import numpy as np

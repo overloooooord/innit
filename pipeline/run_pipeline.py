@@ -1,18 +1,3 @@
-"""
-InVision U ML Pipeline — Main Runner
-=======================================
-Single entry point to run the full pipeline:
-  1. Train model on labeled dataset
-  2. Evaluate against baselines
-  3. Run SHAP explanations + ablation study
-  4. Run fairness audit
-  5. Score a single candidate (demo)
-
-Usage:
-  python run_pipeline.py --dataset data/synthetic_dataset.json
-  python run_pipeline.py --dataset data/synthetic_dataset.json --candidate data/sample_candidate.json
-"""
-
 import argparse
 import json
 import os

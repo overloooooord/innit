@@ -1,12 +1,3 @@
-"""
-InVision U ML Pipeline — Scorer
-=================================
-Final scoring module. Takes a candidate JSON, runs through the full
-pipeline, and returns prediction + explanation ready for the dashboard.
-
-This is the main entry point for the API.
-"""
-
 import json
 import os
 import numpy as np
@@ -19,42 +10,11 @@ from explainer import CandidateExplainer, FEATURE_DESCRIPTIONS
 
 
 class CandidateScorer:
-    """
-    Scores candidates and generates explanations.
-    Loads a trained model once, then can score many candidates.
-    """
-
     def __init__(self, model_path: str = None, X_background: np.ndarray = None):
-        """
-        Args:
-            model_path: path to trained model pickle
-            X_background: training data for SHAP background (optional)
-        """
         self.model = load_model(model_path or MODEL_PATH)
         self.explainer = CandidateExplainer(self.model, X_background)
 
     def score(self, candidate: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        Score a single candidate.
-
-        Args:
-            candidate: dict following candidate_schema.json
-
-        Returns:
-            {
-                "candidate_id": str,
-                "prediction": "shortlist" | "maybe" | "reject",
-                "confidence": float,
-                "probabilities": {"shortlist": float, "maybe": float, "reject": float},
-                "explanation": {
-                    "top_positive_factors": [...],
-                    "top_negative_factors": [...]
-                },
-                "feature_values": {...},
-                "radar": {...},
-                "flags": {...}
-            }
-        """
         candidate_id = candidate.get("id", "unknown")
 
         # 1. Extract features
@@ -120,10 +80,6 @@ class CandidateScorer:
         return [self.score(c) for c in candidates]
 
     def rank(self, candidates: list) -> list:
-        """
-        Score and rank candidates by shortlist probability.
-        Returns sorted list with rank field added.
-        """
         scored = self.score_batch(candidates)
 
         # Sort by shortlist probability descending
@@ -136,15 +92,8 @@ class CandidateScorer:
 
         return scored
 
-    # ============================================================
-    # Radar chart builder
-    # ============================================================
 
     def _build_radar(self, features: Dict[str, float]) -> Dict[str, int]:
-        """
-        Build radar chart data (1-5 scale) for dashboard.
-        Maps raw features to intuitive dimensions.
-        """
         radar = {}
 
         # Initiative (1-5): based on founder_ratio and solo projects
