@@ -1,10 +1,3 @@
-"""
-InVision U ML Pipeline — Explainer
-====================================
-SHAP-based explanations for model predictions.
-Provides both individual candidate explanations and global feature importance.
-"""
-
 import os
 import json
 import numpy as np
@@ -42,10 +35,6 @@ FEATURE_DESCRIPTIONS = {
 
 
 class CandidateExplainer:
-    """
-    Generates SHAP-based explanations for candidate scoring decisions.
-    """
-
     def __init__(self, model, X_background: np.ndarray = None):
         self.model = model
         self.feature_names = STRUCTURED_FEATURES
