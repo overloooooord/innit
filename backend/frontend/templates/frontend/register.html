@@ -1,0 +1,340 @@
+{% extends "frontend/base.html" %}
+{% block title %}Регистрация — InVision U{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Регистрация кандидата</h1>
+    <p>Заполните анкету для подачи заявки в InVision U</p>
+</div>
+
+<form id="registerForm" class="card" style="max-width:900px;">
+    <!-- Personal -->
+    <div class="form-section">
+        <h3>👤 Личные данные</h3>
+        <div class="form-grid">
+            <div class="form-group">
+                <label for="name">ФИО *</label>
+                <input type="text" id="name" required placeholder="Айгерим Нурланова">
+            </div>
+            <div class="form-group">
+                <label for="age">Возраст *</label>
+                <input type="number" id="age" required min="14" max="25" placeholder="17">
+            </div>
+            <div class="form-group">
+                <label for="city">Город</label>
+                <input type="text" id="city" placeholder="Алматы">
+            </div>
+            <div class="form-group">
+                <label for="region">Регион</label>
+                <input type="text" id="region" placeholder="Алматинская область">
+            </div>
+            <div class="form-group">
+                <label for="school_type">Тип школы</label>
+                <select id="school_type">
+                    <option value="general">Общеобразовательная</option>
+                    <option value="lyceum">Лицей</option>
+                    <option value="gymnasium">Гимназия</option>
+                    <option value="specialized">Специализированная</option>
+                    <option value="homeschool">Домашнее обучение</option>
+                    <option value="college">Колледж</option>
+                    <option value="other">Другое</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="has_mentor">Ментор</label>
+                <select id="has_mentor">
+                    <option value="false">Нет ментора</option>
+                    <option value="true">Есть ментор</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- Education -->
+    <div class="form-section">
+        <h3>📚 Образование</h3>
+        <div class="form-grid">
+            <div class="form-group">
+                <label for="gpa">Средний балл (GPA) *</label>
+                <input type="number" id="gpa" required min="0" max="5" step="0.1" placeholder="4.5">
+            </div>
+        </div>
+
+        <div style="margin-top:1rem;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem;">
+                <label style="font-size:0.85rem;font-weight:500;color:var(--text-secondary)">Олимпиады</label>
+                <button type="button" class="btn btn-sm btn-secondary" onclick="addOlympiad()">+ Добавить</button>
+            </div>
+            <div id="olympiadsContainer"></div>
+        </div>
+
+        <div style="margin-top:1rem;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem;">
+                <label style="font-size:0.85rem;font-weight:500;color:var(--text-secondary)">Курсы</label>
+                <button type="button" class="btn btn-sm btn-secondary" onclick="addCourse()">+ Добавить</button>
+            </div>
+            <div id="coursesContainer"></div>
+        </div>
+    </div>
+
+    <!-- Projects -->
+    <div class="form-section">
+        <h3>🚀 Проекты</h3>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem;">
+            <label style="font-size:0.85rem;font-weight:500;color:var(--text-secondary)">Проекты</label>
+            <button type="button" class="btn btn-sm btn-secondary" onclick="addProject()">+ Добавить проект</button>
+        </div>
+        <div id="projectsContainer"></div>
+    </div>
+
+    <!-- Essay -->
+    <div class="form-section">
+        <h3>📝 Эссе</h3>
+        <div class="form-grid">
+            <div class="form-group">
+                <label for="essayTopic">Тема</label>
+                <input type="text" id="essayTopic" placeholder="Момент, который изменил моё мышление">
+            </div>
+            <div class="form-group full-width">
+                <label for="essayText">Текст эссе</label>
+                <textarea id="essayText" placeholder="Напишите эссе (минимум 200 слов)..."></textarea>
+            </div>
+        </div>
+    </div>
+
+    <!-- Motivation -->
+    <div class="form-section">
+        <h3>💡 Мотивация</h3>
+        <div class="form-group">
+            <label for="motivation">Почему InVision U?</label>
+            <textarea id="motivation" placeholder="Расскажите, почему вы хотите попасть в InVision U..."></textarea>
+        </div>
+    </div>
+
+    <!-- Self-assessment -->
+    <div class="form-section">
+        <h3>📊 Самооценка (1-5)</h3>
+        <div class="form-grid">
+            <div class="form-group">
+                <label for="sa_leadership">Лидерство</label>
+                <input type="number" id="sa_leadership" min="1" max="5" placeholder="3">
+            </div>
+            <div class="form-group">
+                <label for="sa_teamwork">Работа в команде</label>
+                <input type="number" id="sa_teamwork" min="1" max="5" placeholder="4">
+            </div>
+            <div class="form-group">
+                <label for="sa_creativity">Креативность</label>
+                <input type="number" id="sa_creativity" min="1" max="5" placeholder="4">
+            </div>
+            <div class="form-group">
+                <label for="sa_persistence">Упорство</label>
+                <input type="number" id="sa_persistence" min="1" max="5" placeholder="5">
+            </div>
+            <div class="form-group">
+                <label for="sa_communication">Коммуникация</label>
+                <input type="number" id="sa_communication" min="1" max="5" placeholder="3">
+            </div>
+        </div>
+    </div>
+
+    <div style="display:flex;gap:12px;justify-content:flex-end;padding-top:1rem;border-top:1px solid var(--border);">
+        <a href="/" class="btn btn-secondary">Отмена</a>
+        <button type="submit" class="btn btn-primary">📤 Зарегистрировать</button>
+    </div>
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.getElementById('nav-register').classList.add('active');
+
+let olympiadCount = 0;
+let courseCount = 0;
+let projectCount = 0;
+
+function addOlympiad() {
+    olympiadCount++;
+    const id = olympiadCount;
+    const html = `
+    <div class="form-grid" id="olympiad_${id}" style="border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;margin-bottom:8px;position:relative;">
+        <div class="form-group"><label>Предмет</label><input type="text" id="oly_subj_${id}" placeholder="математика"></div>
+        <div class="form-group"><label>Уровень</label>
+            <select id="oly_level_${id}">
+                <option value="school">Школьная</option>
+                <option value="city">Городская</option>
+                <option value="regional">Региональная</option>
+                <option value="national">Национальная</option>
+                <option value="international">Международная</option>
+            </select>
+        </div>
+        <div class="form-group"><label>Результат</label>
+            <select id="oly_result_${id}">
+                <option value="participant">Участник</option>
+                <option value="honorable_mention">Почётное упоминание</option>
+                <option value="prize">Приз</option>
+            </select>
+        </div>
+        <div class="form-group"><label>Год</label><input type="number" id="oly_year_${id}" min="2015" max="2026" placeholder="2024"></div>
+        <button type="button" class="btn btn-sm btn-secondary" style="position:absolute;top:8px;right:8px;" onclick="document.getElementById('olympiad_${id}').remove()">✕</button>
+    </div>`;
+    document.getElementById('olympiadsContainer').insertAdjacentHTML('beforeend', html);
+}
+
+function addCourse() {
+    courseCount++;
+    const id = courseCount;
+    const html = `
+    <div class="form-grid" id="course_${id}" style="border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;margin-bottom:8px;position:relative;">
+        <div class="form-group"><label>Название</label><input type="text" id="crs_name_${id}" placeholder="CS50"></div>
+        <div class="form-group"><label>Платформа</label><input type="text" id="crs_platform_${id}" placeholder="edX"></div>
+        <div class="form-group"><label>Завершён</label>
+            <select id="crs_completed_${id}">
+                <option value="true">Да</option>
+                <option value="false">Нет</option>
+            </select>
+        </div>
+        <button type="button" class="btn btn-sm btn-secondary" style="position:absolute;top:8px;right:8px;" onclick="document.getElementById('course_${id}').remove()">✕</button>
+    </div>`;
+    document.getElementById('coursesContainer').insertAdjacentHTML('beforeend', html);
+}
+
+function addProject() {
+    projectCount++;
+    const id = projectCount;
+    const html = `
+    <div id="project_${id}" style="border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;margin-bottom:8px;position:relative;">
+        <div class="form-grid">
+            <div class="form-group"><label>Название</label><input type="text" id="proj_name_${id}" placeholder="Мой проект"></div>
+            <div class="form-group"><label>Тип</label>
+                <select id="proj_type_${id}">
+                    <option value="technical">Технический</option>
+                    <option value="social">Социальный</option>
+                    <option value="media">Медиа</option>
+                    <option value="business">Бизнес</option>
+                    <option value="education">Образование</option>
+                    <option value="other">Другое</option>
+                </select>
+            </div>
+            <div class="form-group"><label>Роль</label>
+                <select id="proj_role_${id}">
+                    <option value="founder">Основатель</option>
+                    <option value="co_founder">Со-основатель</option>
+                    <option value="participant">Участник</option>
+                    <option value="volunteer">Волонтёр</option>
+                </select>
+            </div>
+            <div class="form-group"><label>Год</label><input type="number" id="proj_year_${id}" min="2015" max="2026" placeholder="2024"></div>
+            <div class="form-group"><label>Размер команды</label><input type="number" id="proj_team_${id}" min="1" placeholder="3"></div>
+            <div class="form-group full-width"><label>Описание</label><textarea id="proj_desc_${id}" rows="2" placeholder="Кратко опишите проект..."></textarea></div>
+        </div>
+        <button type="button" class="btn btn-sm btn-secondary" style="position:absolute;top:8px;right:8px;" onclick="document.getElementById('project_${id}').remove()">✕</button>
+    </div>`;
+    document.getElementById('projectsContainer').insertAdjacentHTML('beforeend', html);
+}
+
+// Collect form data and submit
+document.getElementById('registerForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    // Collect olympiads
+    const olympiads = [];
+    document.querySelectorAll('[id^="olympiad_"]').forEach(el => {
+        const id = el.id.split('_')[1];
+        const subj = document.getElementById(`oly_subj_${id}`);
+        if (subj && subj.value) {
+            olympiads.push({
+                subject: subj.value,
+                level: document.getElementById(`oly_level_${id}`).value,
+                result: document.getElementById(`oly_result_${id}`).value,
+                year: parseInt(document.getElementById(`oly_year_${id}`).value) || 2024,
+            });
+        }
+    });
+
+    // Collect courses
+    const courses = [];
+    document.querySelectorAll('[id^="course_"]').forEach(el => {
+        const id = el.id.split('_')[1];
+        const name = document.getElementById(`crs_name_${id}`);
+        if (name && name.value) {
+            courses.push({
+                name: name.value,
+                platform: document.getElementById(`crs_platform_${id}`).value,
+                completed: document.getElementById(`crs_completed_${id}`).value === 'true',
+            });
+        }
+    });
+
+    // Collect projects
+    const projects = [];
+    document.querySelectorAll('[id^="project_"]').forEach(el => {
+        const id = el.id.split('_')[1];
+        const name = document.getElementById(`proj_name_${id}`);
+        if (name && name.value) {
+            projects.push({
+                name: name.value,
+                type: document.getElementById(`proj_type_${id}`).value,
+                role: document.getElementById(`proj_role_${id}`).value,
+                year: parseInt(document.getElementById(`proj_year_${id}`).value) || 2024,
+                team_size: parseInt(document.getElementById(`proj_team_${id}`).value) || 1,
+                description: document.getElementById(`proj_desc_${id}`).value,
+                is_active: true,
+            });
+        }
+    });
+
+    const essayText = document.getElementById('essayText').value;
+
+    const payload = {
+        personal: {
+            name: document.getElementById('name').value,
+            age: parseInt(document.getElementById('age').value),
+            city: document.getElementById('city').value,
+            region: document.getElementById('region').value,
+            school_type: document.getElementById('school_type').value,
+            has_mentor: document.getElementById('has_mentor').value === 'true',
+        },
+        education: {
+            gpa: parseFloat(document.getElementById('gpa').value),
+            olympiads: olympiads,
+            courses: courses,
+        },
+        experience: {
+            projects: projects,
+        },
+        essay: {
+            topic: document.getElementById('essayTopic').value,
+            text: essayText,
+            word_count: essayText.split(/\s+/).filter(w => w).length,
+        },
+        motivation: {
+            text: document.getElementById('motivation').value,
+        },
+        self_assessment: {
+            leadership: parseInt(document.getElementById('sa_leadership').value) || undefined,
+            teamwork: parseInt(document.getElementById('sa_teamwork').value) || undefined,
+            creativity: parseInt(document.getElementById('sa_creativity').value) || undefined,
+            persistence: parseInt(document.getElementById('sa_persistence').value) || undefined,
+            communication: parseInt(document.getElementById('sa_communication').value) || undefined,
+        },
+        bot_metadata: {
+            session_duration_sec: 0,
+            essay_typing_duration_sec: 0,
+            pauses: [],
+        },
+    };
+
+    try {
+        const result = await api('/api/candidates/', {
+            method: 'POST',
+            body: JSON.stringify(payload),
+        });
+        showToast(result.message, 'success');
+        setTimeout(() => window.location = '/', 1500);
+    } catch (e) {
+        showToast(e.message, 'error');
+    }
+});
+</script>
+{% endblock %}

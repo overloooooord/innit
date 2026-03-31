@@ -1,0 +1,241 @@
+{% extends "frontend/base.html" %}
+{% block title %}Кандидаты — InVision U{% endblock %}
+
+{% block content %}
+<!-- Stats bar -->
+<div class="stats-bar" id="statsBar">
+    <div class="stat-card">
+        <div class="stat-number" id="statTotal">—</div>
+        <div class="stat-desc">Всего кандидатов</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-number" id="statShortlist" style="--accent:#22c55e; background:linear-gradient(135deg,#22c55e,#34d399);-webkit-background-clip:text;background-clip:text;">—</div>
+        <div class="stat-desc">Shortlist</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-number" id="statMaybe" style="background:linear-gradient(135deg,#f59e0b,#fbbf24);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">—</div>
+        <div class="stat-desc">Maybe</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-number" id="statUnscored" style="background:linear-gradient(135deg,#64748b,#94a3b8);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">—</div>
+        <div class="stat-desc">Не оценены</div>
+    </div>
+</div>
+
+<!-- Controls -->
+<div class="controls-bar">
+    <div class="search-box">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="searchInput" placeholder="Поиск по имени, городу или региону...">
+    </div>
+    <select class="filter-select" id="filterPrediction">
+        <option value="">Все рекомендации</option>
+        <option value="shortlist">✅ Shortlist</option>
+        <option value="maybe">⚠️ Maybe</option>
+        <option value="reject">❌ Reject</option>
+    </select>
+    <button class="btn btn-primary" id="btnScoreAll" onclick="scoreAll()">
+        🤖 Оценить всех
+    </button>
+</div>
+
+<!-- Table -->
+<div class="table-container">
+    <table>
+        <thead>
+            <tr>
+                <th data-sort="name">Имя <span class="sort-arrow">↕</span></th>
+                <th data-sort="age">Возраст <span class="sort-arrow">↕</span></th>
+                <th data-sort="city">Город <span class="sort-arrow">↕</span></th>
+                <th>GPA</th>
+                <th>Проекты</th>
+                <th>Рекомендация</th>
+                <th>Уверенность</th>
+                <th>Действия</th>
+            </tr>
+        </thead>
+        <tbody id="candidatesBody">
+            <tr><td colspan="8" class="loading"><div class="spinner"></div>Загрузка...</td></tr>
+        </tbody>
+    </table>
+</div>
+
+<!-- Pagination -->
+<div class="pagination" id="pagination"></div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.getElementById('nav-candidates').classList.add('active');
+
+let currentSort = 'created_at';
+let currentOrder = 'desc';
+let currentPage = 1;
+let searchTimeout;
+
+// Load candidates
+async function loadCandidates(page = 1) {
+    const filter = document.getElementById('filterPrediction').value;
+    let url = `/api/candidates/?page=${page}&sort_by=${currentSort}&order=${currentOrder}`;
+    if (filter) url += `&prediction=${filter}`;
+
+    try {
+        const data = await api(url);
+        renderTable(data.results);
+        renderPagination(data.count, page);
+        updateStats();
+    } catch (e) {
+        showToast(e.message, 'error');
+    }
+}
+
+// Search
+async function searchCandidates(query) {
+    if (!query.trim()) {
+        loadCandidates(1);
+        return;
+    }
+    try {
+        const data = await api(`/api/candidates/search/?q=${encodeURIComponent(query)}`);
+        renderTable(data.results);
+        document.getElementById('pagination').innerHTML = '';
+    } catch (e) {
+        showToast(e.message, 'error');
+    }
+}
+
+// Render table
+function renderTable(candidates) {
+    const tbody = document.getElementById('candidatesBody');
+    if (!candidates.length) {
+        tbody.innerHTML = '<tr><td colspan="8" class="empty-state"><div class="icon">📭</div>Кандидаты не найдены</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = candidates.map(c => `
+        <tr onclick="window.location='/candidate/${c.id}/'">
+            <td><strong>${esc(c.name)}</strong></td>
+            <td>${c.age}</td>
+            <td>${esc(c.city || '—')}</td>
+            <td>${c.gpa != null ? c.gpa.toFixed(1) : '—'}</td>
+            <td>${c.project_count || 0}</td>
+            <td>${predBadge(c.prediction)}</td>
+            <td>${c.confidence != null ? (c.confidence * 100).toFixed(0) + '%' : '—'}</td>
+            <td>
+                <button class="btn btn-sm btn-secondary" onclick="event.stopPropagation(); scoreOne(${c.id})">
+                    🤖 Оценить
+                </button>
+            </td>
+        </tr>
+    `).join('');
+}
+
+// Pagination
+function renderPagination(total, current) {
+    const pageSize = 20;
+    const pages = Math.ceil(total / pageSize);
+    if (pages <= 1) { document.getElementById('pagination').innerHTML = ''; return; }
+
+    let html = '';
+    for (let i = 1; i <= pages; i++) {
+        if (i === current) {
+            html += `<span class="active">${i}</span>`;
+        } else {
+            html += `<a href="#" onclick="event.preventDefault(); loadCandidates(${i})">${i}</a>`;
+        }
+    }
+    document.getElementById('pagination').innerHTML = html;
+}
+
+// Update stats
+async function updateStats() {
+    try {
+        const all = await api('/api/candidates/?page_size=1000');
+        const candidates = all.results;
+        const total = all.count;
+        const shortlist = candidates.filter(c => c.prediction === 'shortlist').length;
+        const maybe = candidates.filter(c => c.prediction === 'maybe').length;
+        const unscored = candidates.filter(c => c.prediction === null).length;
+
+        document.getElementById('statTotal').textContent = total;
+        document.getElementById('statShortlist').textContent = shortlist;
+        document.getElementById('statMaybe').textContent = maybe;
+        document.getElementById('statUnscored').textContent = unscored;
+    } catch (e) {}
+}
+
+// Score one candidate
+async function scoreOne(id) {
+    try {
+        showToast('Оцениваю кандидата...', 'info');
+        await api(`/api/candidates/${id}/score/`, { method: 'POST' });
+        showToast('Кандидат оценён!', 'success');
+        loadCandidates(currentPage);
+    } catch (e) {
+        showToast(e.message, 'error');
+    }
+}
+
+// Score all
+async function scoreAll() {
+    try {
+        const btn = document.getElementById('btnScoreAll');
+        btn.disabled = true;
+        btn.textContent = '⏳ Оцениваю...';
+        showToast('Запущена оценка всех кандидатов...', 'info');
+        const result = await api('/api/candidates/score-all/', { method: 'POST' });
+        showToast(result.message, 'success');
+        loadCandidates(currentPage);
+        btn.disabled = false;
+        btn.innerHTML = '🤖 Оценить всех';
+    } catch (e) {
+        showToast(e.message, 'error');
+        document.getElementById('btnScoreAll').disabled = false;
+        document.getElementById('btnScoreAll').innerHTML = '🤖 Оценить всех';
+    }
+}
+
+// Helpers
+function predBadge(pred) {
+    if (!pred) return '<span class="badge badge-pending">Не оценён</span>';
+    const cls = { shortlist: 'badge-shortlist', maybe: 'badge-maybe', reject: 'badge-reject' };
+    const labels = { shortlist: 'Shortlist', maybe: 'Maybe', reject: 'Reject' };
+    return `<span class="badge ${cls[pred] || ''}">${labels[pred] || pred}</span>`;
+}
+
+function esc(s) {
+    const d = document.createElement('div');
+    d.textContent = s;
+    return d.innerHTML;
+}
+
+// Sorting
+document.querySelectorAll('thead th[data-sort]').forEach(th => {
+    th.addEventListener('click', () => {
+        const field = th.dataset.sort;
+        if (currentSort === field) {
+            currentOrder = currentOrder === 'asc' ? 'desc' : 'asc';
+        } else {
+            currentSort = field;
+            currentOrder = 'asc';
+        }
+        document.querySelectorAll('thead th').forEach(t => t.classList.remove('sorted'));
+        th.classList.add('sorted');
+        th.querySelector('.sort-arrow').textContent = currentOrder === 'asc' ? '↑' : '↓';
+        loadCandidates(1);
+    });
+});
+
+// Search with debounce
+document.getElementById('searchInput').addEventListener('input', (e) => {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => searchCandidates(e.target.value), 300);
+});
+
+// Filter change
+document.getElementById('filterPrediction').addEventListener('change', () => loadCandidates(1));
+
+// Init
+loadCandidates(1);
+</script>
+{% endblock %}
