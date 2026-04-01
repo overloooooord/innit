@@ -378,6 +378,8 @@ function initRegistrationForm() {
     const telegram = $('f-telegram').value.trim();
     const hobbies  = $('f-hobbies').value.trim();
     const sport    = $('f-sport').value.trim();
+    const essay    = $('f-essay').value.trim();
+    const motivation = $('f-motivation').value.trim();
     const langs    = state.selectedLangs;
 
     // Валидация
@@ -409,6 +411,8 @@ function initRegistrationForm() {
       telegram_username:  telegram.startsWith('@') ? telegram : `@${telegram}`,
       hobbies:            hobbies,
       sport:              sport,
+      essay:              essay,
+      motivation_letter:  motivation,
     };
 
     // Отправляем в backend

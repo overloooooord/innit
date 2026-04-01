@@ -5,10 +5,9 @@
 <div class="panel-header">
     <div>
         <h1>Панель управления</h1>
-        <p style="color:var(--text-secondary);font-size:0.9rem;">Просмотр и оценка всех кандидатов</p>
+        <p style="color:var(--text-secondary);font-size:0.9rem;">Просмотр заявок и результатов тестов</p>
     </div>
     <div class="panel-actions">
-        <button class="btn btn-accent" id="btnScoreAll" onclick="scoreAll()">🤖 Оценить всех</button>
         <a href="/panel/logout/" class="btn btn-secondary">Выйти</a>
     </div>
 </div>
@@ -53,12 +52,11 @@
         <thead>
             <tr>
                 <th data-sort="name">Имя <span class="sort-arrow">↕</span></th>
-                <th data-sort="age">Возраст <span class="sort-arrow">↕</span></th>
                 <th data-sort="city">Город <span class="sort-arrow">↕</span></th>
-                <th>GPA</th>
-                <th>Проекты</th>
-                <th>Рекомендация</th>
-                <th>Уверенность</th>
+                <th>Языки</th>
+                <th>MBTI Тип</th>
+                <th>Языковой тест</th>
+                <th data-sort="status">Статус <span class="sort-arrow">↕</span></th>
                 <th>Действия</th>
             </tr>
         </thead>
@@ -82,8 +80,8 @@ let searchTimeout;
 
 async function loadCandidates(page = 1) {
     const filter = document.getElementById('filterPrediction').value;
-    let url = `/api/candidates/?page=${page}&sort_by=${currentSort}&order=${currentOrder}`;
-    if (filter) url += `&prediction=${filter}`;
+    let url = `/api/admin/applications/?page=${page}&sort_by=${currentSort}&order=${currentOrder}`;
+    if (filter) url += `&mbti=${filter}`;
     try {
         const data = await api(url);
         renderTable(data.results);
@@ -95,7 +93,9 @@ async function loadCandidates(page = 1) {
 async function searchCandidates(query) {
     if (!query.trim()) { loadCandidates(1); return; }
     try {
-        const data = await api(`/api/candidates/search/?q=${encodeURIComponent(query)}`);
+        // Admin search hasn't been specifically created in views, we can just fetch all for now or rely on loadCandidates
+        let url = `/api/admin/applications/?search=${encodeURIComponent(query)}`;
+        const data = await api(url);
         renderTable(data.results);
         document.getElementById('pagination').innerHTML = '';
     } catch (e) { showToast(e.message, 'error'); }
@@ -104,23 +104,28 @@ async function searchCandidates(query) {
 function renderTable(candidates) {
     const tbody = document.getElementById('candidatesBody');
     if (!candidates.length) {
-        tbody.innerHTML = '<tr><td colspan="8" class="empty-state"><div class="icon">📭</div>Кандидаты не найдены</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="7" class="empty-state"><div class="icon">📭</div>Заявки не найдены</td></tr>';
         return;
     }
-    tbody.innerHTML = candidates.map(c => `
-        <tr onclick="window.location='/candidate/${c.id}/'">
+    tbody.innerHTML = candidates.map(c => {
+        const mbti = c.mbti_result ? c.mbti_result.result_type || '—' : 'Не пройден';
+        const langTest = c.language_tests && c.language_tests.length > 0 
+            ? `${c.language_tests[0].score}/${c.language_tests[0].max_score}` 
+            : 'Не пройден';
+
+        return `
+        <tr onclick="alert('Эссе: ' + decodeURIComponent('${encodeURIComponent(c.essay || '')}') + '\\n\\nМотивационное: ' + decodeURIComponent('${encodeURIComponent(c.motivation_letter || '')}'))">
             <td><strong>${esc(c.name)}</strong></td>
-            <td>${c.age}</td>
             <td>${esc(c.city || '—')}</td>
-            <td>${c.gpa != null ? c.gpa.toFixed(1) : '—'}</td>
-            <td>${c.project_count || 0}</td>
-            <td>${predBadge(c.prediction)}</td>
-            <td>${c.confidence != null ? (c.confidence * 100).toFixed(0) + '%' : '—'}</td>
+            <td>${esc((c.languages || []).join(', '))}</td>
+            <td><span class="badge" style="background:#374151;">${mbti}</span></td>
+            <td>${langTest}</td>
+            <td>${esc(c.status)}</td>
             <td>
-                <button class="btn btn-sm btn-secondary" onclick="event.stopPropagation(); scoreOne(${c.id})">Оценить</button>
+                <span style="font-size:0.8rem; color:var(--clr-text-2);">Кликните для деталей</span>
             </td>
         </tr>
-    `).join('');
+    `}).join('');
 }
 
 function renderPagination(total, current) {

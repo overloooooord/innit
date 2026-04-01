@@ -141,6 +141,18 @@ class Application(models.Model):
         default='',
         help_text='Хобби и увлечения (свободный текст)',
     )
+    essay = models.TextField(
+        'Эссе',
+        blank=True,
+        default='',
+        help_text='Эссе кандидата',
+    )
+    motivation_letter = models.TextField(
+        'Мотивационное письмо',
+        blank=True,
+        default='',
+        help_text='Почему кандидат хочет учиться у нас',
+    )
     sport = models.CharField(
         'Спорт',
         max_length=200,

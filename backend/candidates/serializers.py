@@ -134,7 +134,7 @@ class ApplicationSerializer(serializers.ModelSerializer):
         model = Application
         fields = [
             'id', 'name', 'city', 'region', 'languages',
-            'telegram_username', 'hobbies', 'sport', 'status',
+            'telegram_username', 'hobbies', 'sport', 'essay', 'motivation_letter', 'status',
             'created_at', 'updated_at',
             'mbti_result', 'language_tests',
         ]
@@ -228,7 +228,7 @@ class ApplicationListSerializer(serializers.ModelSerializer):
         model = Application
         fields = [
             'id', 'name', 'city', 'region', 'languages',
-            'telegram_username', 'sport', 'status', 'created_at',
+            'telegram_username', 'sport', 'essay', 'motivation_letter', 'status', 'created_at',
         ]
 
 
