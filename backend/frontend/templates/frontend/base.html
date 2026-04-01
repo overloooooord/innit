@@ -4,19 +4,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="InVision U — AI-powered candidate selection system">
+    <meta name="description" content="InVision U — AI система отбора кандидатов">
     <title>{% block title %}InVision U{% endblock %}</title>
     <link rel="stylesheet" href="{% static 'frontend/style.css' %}">
 </head>
 <body>
     <nav class="navbar">
         <a href="/" class="navbar-brand">
-            <div class="logo">✦</div>
+            <div class="logo">iU</div>
             InVision U
         </a>
         <div class="navbar-links">
-            <a href="/" id="nav-candidates">📋 Кандидаты</a>
-            <a href="/register/" id="nav-register">➕ Регистрация</a>
+            <a href="/" id="nav-candidates">Кандидаты</a>
+            <a href="/register/" id="nav-register">Регистрация</a>
+            <a href="/panel/" id="nav-panel">Панель</a>
         </div>
     </nav>
 
@@ -27,7 +28,6 @@
     <div class="toast-container" id="toastContainer"></div>
 
     <script>
-        // Toast notification system
         function showToast(message, type = 'info') {
             const container = document.getElementById('toastContainer');
             const toast = document.createElement('div');
@@ -37,7 +37,6 @@
             setTimeout(() => toast.remove(), 4000);
         }
 
-        // API helper
         async function api(url, options = {}) {
             const defaults = {
                 headers: { 'Content-Type': 'application/json' },

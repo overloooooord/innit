@@ -444,105 +444,106 @@ python pipeline/run_pipeline.py --dataset data/synthetic_dataset.json --candidat
 
 ---
 
-## 10. Как связать ML-пайплайн с Django
+## 10. Как связать ML-пайплайн с Django (Практика из кода)
 
-### Шаг 1: Инициализация скорера (один раз при старте сервера)
+Вместо теории давайте проследим связь **Фронтенд → Django → ML pipeline** прямо по реальному коду на примере нажатия кнопки "Оценить кандидата".
+
+### Шаг 1: Фронтенд (JavaScript) просит оценить кандидата
+На фронтенде в файле `backend/frontend/templates/frontend/candidate_detail.html` есть кнопка и функция `runScore()`. По клику интерфейс вызывает API:
+
+```javascript
+// JS код в браузере (frontend/templates/frontend/candidate_detail.html)
+async function runScore() {
+    // 1. Делаем HTTP POST-запрос к API Django, передаём только ID кандидата
+    // Примерно так: POST /api/candidates/5/score/
+    await api(`/api/candidates/${CANDIDATE_ID}/score/`, { method: 'POST' });
+    
+    // 2. После успешного ответа просто перезапрашиваем страницу, чтобы нарисовать радар
+    loadCandidate(); 
+}
+```
+**Суть:** Фронтенд ничего не знает про ML. Он просто дергает URL `.../score/`.
+
+### Шаг 2: Django ловит URL и вызывает функцию `candidate_score`
+В файле `backend/candidates/urls.py` прописан маршрут: `path('<int:pk>/score/', views.candidate_score)`. 
+Запрос попадает в контроллер (`backend/candidates/views.py`):
 
 ```python
-# В Django: создать файл ml_service.py
-import os
+# Django (backend/candidates/views.py)
+from .models import Candidate, ScoringResult
+from .ml_service import score_candidate # Наш мост к ML
+
+@api_view(['POST'])
+def candidate_score(request, pk):
+    # 1. Django находит кандидата в базе SQLite
+    candidate = Candidate.objects.get(pk=pk)
+    
+    # 2. ПОДГОТОВКА ДАННЫХ ДЛЯ ML
+    # Метод to_pipeline_dict() берёт данные из таблицы БД и переводит их 
+    # в простой Python-словарь (JSON), который понимает ML-модель.
+    candidate_dict = candidate.to_pipeline_dict()
+    
+    # 3. ВЫЗОВ ML-ПАЙПЛАЙНА
+    # Передаём словарь в функцию score_candidate и ждём ответ
+    result = score_candidate(candidate_dict)
+```
+
+### Шаг 3: Мост между Django и ML (ml_service.py)
+Функция `score_candidate` находится в специальном слое-обёртке (`backend/candidates/ml_service.py`). Эта обёртка нужна для того, чтобы модель XGBoost загружалась в память только ОДИН раз при запуске сервера, а не скачивалась каждый раз при клике.
+
+```python
+# Физический мост (backend/candidates/ml_service.py)
 import sys
-
-# Добавить путь к pipeline
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'pipeline'))
-
+# Добавляем папку pipeline в пути питона, чтобы можно было импортировать scorer
+sys.path.insert(0, settings.ML_PIPELINE_DIR) 
 from scorer import CandidateScorer
 
-# Глобальный скорер — загружается один раз
-_scorer = None
-
-def get_scorer():
-    global _scorer
-    if _scorer is None:
-        _scorer = CandidateScorer(model_path='models/model.pkl')
-    return _scorer
+def score_candidate(candidate_dict):
+    """Обертка над тяжёлой ML-моделью."""
+    
+    # Получаем уже загруженную в оперативную память модель (singleton)
+    scorer = get_scorer() 
+    
+    # Запускаем чистый Data Science код (scorer.py)
+    # ML извлекает 23 фичи, считает SHAP, делает prediction
+    return scorer.score(candidate_dict)
 ```
+**Что возвращает ML (`result`):**
+Словарь вида `{"prediction": "shortlist", "confidence": 0.85, "radar": {"Лидерство": 5...}, ...}`
 
-### Шаг 2: Использование в Django View
+### Шаг 4: Сохранение результатов и ответ Фронтенду
+Мы возвращаемся обратно во `views.py`. ML-модель отдала цифры, теперь Django должен их запомнить (сохранить в БД) и отдать ответ браузеру:
 
 ```python
-# views.py
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from .ml_service import get_scorer
-from .models import Candidate, ScoringResult
+# Возвращаемся в Django (backend/candidates/views.py)
 
-class ScoreCandidateView(APIView):
-    def post(self, request, candidate_id):
-        # 1. Достать кандидата из базы
-        candidate = Candidate.objects.get(id=candidate_id)
-        
-        # 2. Превратить в JSON-словарь (такой же формат как sample_candidate.json)
-        candidate_dict = candidate.to_pipeline_dict()
-        
-        # 3. Вызвать ML-скорер
-        scorer = get_scorer()
-        result = scorer.score(candidate_dict)
-        
-        # 4. Сохранить результат
-        ScoringResult.objects.update_or_create(
-            candidate=candidate,
-            defaults={
-                'prediction': result['prediction'],
-                'confidence': result['confidence'],
-                'full_result': result,  # JSONField
-            }
-        )
-        
-        # 5. Вернуть результат фронтенду
-        return Response(result)
+    # 4. СОХРАНЕНИЕ В БАЗУ ДАННЫХ
+    # Мы сохраняем результаты ML в специальную таблицу ScoringResult
+    ScoringResult.objects.update_or_create(
+        candidate=candidate,
+        defaults={
+            'prediction': result['prediction'],          # "shortlist"
+            'confidence': result['confidence'],          # 0.87
+            'probabilities': result.get('probabilities', {}), 
+            'full_result': result,                       # Весь JSON с радаром и объяснениями
+        },
+    )
+    
+    # 5. ОТВЕТ БРАУЗЕРУ
+    # Возвращаем эти же данные на фронтенд
+    return Response(result)
 ```
 
-### Шаг 3: Модель Django
-
-```python
-# models.py
-from django.db import models
-
-class Candidate(models.Model):
-    # Personal
-    name = models.CharField(max_length=200)
-    age = models.IntegerField()
-    city = models.CharField(max_length=100, blank=True)
-    region = models.CharField(max_length=100, blank=True)
-    school_type = models.CharField(max_length=50, blank=True)
-    has_mentor = models.BooleanField(default=False)
-    
-    # Все данные как JSON (education, experience, essay и т.д.)
-    profile_data = models.JSONField()  # Полный JSON кандидата
-    
-    created_at = models.DateTimeField(auto_now_add=True)
-    
-    def to_pipeline_dict(self):
-        """Конвертировать в формат, который ожидает scorer.py"""
-        data = self.profile_data.copy()
-        data['id'] = str(self.id)
-        data['personal'] = {
-            'name': self.name,
-            'age': self.age,
-            'city': self.city,
-            'school_type': self.school_type,
-            'has_mentor': self.has_mentor,
-        }
-        return data
-
-class ScoringResult(models.Model):
-    candidate = models.OneToOneField(Candidate, on_delete=models.CASCADE)
-    prediction = models.CharField(max_length=20)  # reject/maybe/shortlist
-    confidence = models.FloatField()
-    full_result = models.JSONField()  # Полный ответ scorer.score()
-    scored_at = models.DateTimeField(auto_now=True)
+### Шаг 5: Фронтенд отрисовывает радар
+JavaScript во фронтенде (из Шага 1) видит, что ответ пришёл без ошибок. Вызывается функция `loadCandidate()`, она забирает новые данные и передает графики на отрисовку:
+```javascript
+// JS код отрисовки (frontend/templates/frontend/candidate_detail.html)
+if (scoring && scoring.full_result && scoring.full_result.radar) {
+    drawRadar(scoring.full_result.radar); // Рисует канвас по данным радара от ML
+}
 ```
+
+**Вот и всё!** Django выступает "дирижёром": он забирает данные из базы → переводит их в словарь для ML → вызывает ML → берёт ответ ML → пишет его в базу → отправляет на фронт.
 
 ---
 

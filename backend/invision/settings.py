@@ -1,17 +1,22 @@
 """
 Django settings for invision project.
+Все секреты загружаются из .env файла через python-decouple.
 """
 
 import os
 from pathlib import Path
+from decouple import config, Csv
+import dj_database_url
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 PROJECT_ROOT = BASE_DIR.parent  # /home/.../Indrive-AI
 
-SECRET_KEY = 'django-insecure-gde4b9h#$5&a!yap1s27!=jw(-dyx-_i4dy3prlbb)^t@!763a'
-DEBUG = True
-ALLOWED_HOSTS = ['*']
+# ── Секреты из .env ──────────────────────────────────────────
+SECRET_KEY = config('SECRET_KEY', default='django-insecure-change-me-in-production')
+DEBUG = config('DEBUG', default=True, cast=bool)
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='*', cast=Csv())
 
+# ── Приложения ───────────────────────────────────────────────
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -30,6 +35,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -57,12 +63,33 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'invision.wsgi.application'
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+# ── База данных ──────────────────────────────────────────────
+# По умолчанию SQLite. Для PostgreSQL — раскомментируй DB_* в .env
+_db_engine = config('DB_ENGINE', default='django.db.backends.sqlite3')
+
+if _db_engine == 'django.db.backends.sqlite3':
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
     }
-}
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': _db_engine,
+            'NAME': config('DB_NAME', default='indrive_ai'),
+            'USER': config('DB_USER', default='postgres'),
+            'PASSWORD': config('DB_PASSWORD', default='postgres'),
+            'HOST': config('DB_HOST', default='localhost'),
+            'PORT': config('DB_PORT', default='5432'),
+        }
+    }
+
+# Railway provides DATABASE_URL — override if present
+_database_url = config('DATABASE_URL', default='')
+if _database_url:
+    DATABASES['default'] = dj_database_url.parse(_database_url)
 
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
@@ -77,19 +104,92 @@ USE_I18N = True
 USE_TZ = True
 
 STATIC_URL = 'static/'
-
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATICFILES_DIRS = [
+    PROJECT_ROOT / 'front',
+]
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# CORS
+# ── CORS ─────────────────────────────────────────────────────
 CORS_ALLOW_ALL_ORIGINS = True
 
-# DRF
+# ── DRF ──────────────────────────────────────────────────────
 REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 20,
 }
 
-# ML Pipeline paths
+# ── ML Pipeline ──────────────────────────────────────────────
 ML_MODEL_PATH = os.path.join(PROJECT_ROOT, 'pipeline', 'models', 'model.pkl')
 ML_PIPELINE_DIR = os.path.join(PROJECT_ROOT, 'pipeline')
 ML_DATASET_PATH = os.path.join(PROJECT_ROOT, 'data', 'synthetic_dataset.json')
+
+# ── Telegram ─────────────────────────────────────────────────
+TELEGRAM_BOT_TOKEN = config('TELEGRAM_BOT_TOKEN', default='')
+TELEGRAM_CHAT_IDS = config('TELEGRAM_CHAT_IDS', default='', cast=Csv(int))
+
+# ── Admin Panel ──────────────────────────────────────────────
+PANEL_USERNAME = config('PANEL_USERNAME', default='era')
+PANEL_PASSWORD_HASH = config('PANEL_PASSWORD_HASH', default='')
+
+# ── Логирование ──────────────────────────────────────────────
+LOG_DIR = os.path.join(BASE_DIR, 'logs')
+os.makedirs(LOG_DIR, exist_ok=True)
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '[{asctime}] {levelname} {name} — {message}',
+            'style': '{',
+        },
+        'simple': {
+            'format': '{levelname} {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'simple',
+        },
+        'file_app': {
+            'class': 'logging.FileHandler',
+            'filename': os.path.join(LOG_DIR, 'app.log'),
+            'formatter': 'verbose',
+            'encoding': 'utf-8',
+        },
+        'file_errors': {
+            'class': 'logging.FileHandler',
+            'filename': os.path.join(LOG_DIR, 'errors.log'),
+            'formatter': 'verbose',
+            'level': 'ERROR',
+            'encoding': 'utf-8',
+        },
+        'file_applications': {
+            'class': 'logging.FileHandler',
+            'filename': os.path.join(LOG_DIR, 'applications.log'),
+            'formatter': 'verbose',
+            'encoding': 'utf-8',
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console', 'file_errors'],
+            'level': 'WARNING',
+            'propagate': True,
+        },
+        'candidates': {
+            'handlers': ['console', 'file_app', 'file_errors'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'candidates.applications': {
+            'handlers': ['console', 'file_applications'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+    },
+}

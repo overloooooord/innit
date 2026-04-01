@@ -1,1027 +1,881 @@
 /**
- * app.js — UniAdmit / inVision U Frontend Logic
+ * app.js — Основная логика приложения inVision U
  * ================================================
- * Handles:
- *   - SPA screen routing (landing → register → login → form → results)
- *   - Auth (register / login via API)
- *   - Multi-block application form (5 blocks)
- *   - JSON submission to backend
- *   - Results display (raw JSON from server)
+ *
+ * КАК ЭТО РАБОТАЕТ (для начинающих):
+ *
+ *   Приложение — это SPA (Single Page Application).
+ *   Вместо перехода по страницам мы показываем/скрываем «экраны» (sections).
+ *
+ *   Поток пользователя:
+ *     1. Landing (главная) — кликаешь "Подать заявку"
+ *     2. Registration (анкета) — заполняешь поля → отправляешь в backend
+ *     3. MBTI Test — 40 вопросов, по одному на экране, отвечаешь A или B
+ *     4. Language Test — 20 вопросов с таймером (10 минут), контроль вкладки
+ *     5. Success — «Заявка отправлена!» + ссылка на Telegram
+ *
+ *   Зависимости (загружаются ДО этого файла):
+ *     - i18n.js → переводы (функция t(), setLanguage())
+ *     - api.js  → API клиент (объект API с методами getCities, submitApplication и т.д.)
  */
 
 'use strict';
 
-// ─── API base URL ─────────────────────────────────────────────────────────────
-// All backend calls go to /api/...
-const API = '/api';
-
-// ─── Application state ───────────────────────────────────────────────────────
-// This object holds everything we need across screens.
+// ─── Состояние приложения ─────────────────────────────────────────────────────
+// Один объект хранит ВСЁ, что нужно знать о текущей сессии пользователя.
 const state = {
-  user:         null,  // { id, username, email } set after login/register
-  token:        null,  // session token (not used for auth headers yet)
-  currentBlock: 0,     // which of the 5 blocks is currently shown (0-indexed)
+  applicationId: null,    // ID заявки (приходит от backend после submit)
+  mbtiIndex:     0,       // Номер текущего вопроса MBTI (0-39)
+  mbtiAnswers:   {},      // Ответы MBTI: { q1: "A", q2: "B", ... }
+  langIndex:     0,       // Номер текущего вопроса языкового теста (0-19)
+  langAnswers:   {},      // Ответы: { q1: "B", q2: "A", ... }
+  langTimer:     600,     // Осталось секунд (600 = 10 минут)
+  langTimerId:   null,    // ID таймера (для clearInterval)
+  violations:    0,       // Счётчик выходов из вкладки
+  langBlocked:   false,   // Заблокирован ли тест
+  langStartTime: null,    // Время начала теста (Date)
+  selectedLangs: [],      // Выбранные языки в форме
+  cities:        [],      // Список городов (с backend)
+  languagesList: [],      // Список языков (с backend)
 };
 
-// ─── Block definitions ────────────────────────────────────────────────────────
-// Each block has a title, subtitle, and a type.
-// The actual fields/questions are rendered separately.
-const BLOCKS = [
-  { title: 'Блок 1',  subtitle: 'Базовая информация',        type: 'basic_info' },
-  { title: 'Блок 2',  subtitle: 'Опыт и активности',         type: 'experience' },
-  { title: 'Блок 3',  subtitle: 'Мотивация и эссе',          type: 'motivation' },
-  { title: 'Блок 4',  subtitle: 'Психометрический тест',     type: 'psychometric' },
-  { title: 'Блок 5',  subtitle: 'Согласия и подтверждения',  type: 'consents' },
+
+// ─── MBTI Вопросы (40 штук) ──────────────────────────────────────────────────
+// Формат: key, text, optionA, optionB
+// Backend ожидает ответы в формате { q1: "A", q2: "B", ... }
+// A = первый вариант, B = второй вариант
+const MBTI_QUESTIONS = [
+  // ── Целеустремлённость (1-8) ──
+  { key: 'q1',  text: 'Когда у меня есть важная цель, я...',
+    a: 'Сразу составляю план и следую ему', b: 'Действую по ситуации и настроению' },
+  { key: 'q2',  text: 'Я ставлю долгосрочные цели (на год+)?',
+    a: 'Да, у меня есть чёткий план', b: 'Редко — предпочитаю краткосрочные задачи' },
+  { key: 'q3',  text: 'Если я не успеваю в срок, я...',
+    a: 'Пересматриваю план и наверстываю', b: 'Расстраиваюсь или прошу перенос' },
+  { key: 'q4',  text: 'Моя учёба/работа над проектами...',
+    a: 'Всегда структурирована: расписание и дедлайны', b: 'Хаотична, но результат бывает' },
+  { key: 'q5',  text: 'Когда у меня несколько задач, я...',
+    a: 'Приоритизирую и делаю по очереди', b: 'Переключаюсь по настроению' },
+  { key: 'q6',  text: 'Как часто ты достигаешь своих целей?',
+    a: 'Почти всегда — ставлю реалистичные цели', b: 'Примерно 50/50 или реже' },
+  { key: 'q7',  text: 'Что мешает тебе достигать целей?',
+    a: 'Ничего — я справляюсь', b: 'Прокрастинация или страх неудачи' },
+  { key: 'q8',  text: 'Когда учишься чему-то новому, ты...',
+    a: 'Предпочитаю чёткую структуру: курс, книга', b: 'Учусь на практике, пробуя разное' },
+
+  // ── Мотивация (9-16) ──
+  { key: 'q9',  text: 'Что мотивирует тебя работать усердно?',
+    a: 'Желание стать профессионалом', b: 'Интерес к процессу обучения' },
+  { key: 'q10', text: 'Когда занимаешься интересным делом, ты...',
+    a: 'Теряю счёт времени — полностью погружаюсь', b: 'Интересно, но легко отвлекаюсь' },
+  { key: 'q11', text: 'Если бы деньги не были проблемой, ты бы...',
+    a: 'Продолжал(а) учиться и исследовать', b: 'Путешествовал(а) и отдыхал(а)' },
+  { key: 'q12', text: 'Когда скучно в учёбе, ты...',
+    a: 'Ищу более глубокий материал сам(а)', b: 'Жду, пока это закончится' },
+  { key: 'q13', text: 'Твоя учёбная активность вне школы...',
+    a: 'Высокая: онлайн-курсы, книги, проекты', b: 'Низкая: только если задали' },
+  { key: 'q14', text: 'Когда достигаешь цели, ты обычно...',
+    a: 'Радуюсь и ставлю новую, выше', b: 'Чувствую облегчение или быстро теряю интерес' },
+  { key: 'q15', text: 'Насколько важно «быть лучшим»?',
+    a: 'Очень — стремлюсь к мастерству', b: 'Мне важнее прогресс, чем сравнение' },
+  { key: 'q16', text: 'Когда слышишь об успехе другого, ты...',
+    a: 'Вдохновляюсь и думаю, как достичь подобного', b: 'Радуюсь, но иногда чувствую зависть' },
+
+  // ── Стрессоустойчивость (17-24) ──
+  { key: 'q17', text: 'Когда что-то пошло не по плану, ты...',
+    a: 'Анализирую и ищу новый путь', b: 'Надолго застреваю в негативных мыслях' },
+  { key: 'q18', text: 'В стрессовых ситуациях ты...',
+    a: 'Концентрируюсь и работаю эффективнее', b: 'Сильно переживаю, что мешает работе' },
+  { key: 'q19', text: 'После серьёзной неудачи ты восстанавливаешься...',
+    a: 'Быстро — провал это урок', b: 'Долго — трудно прийти в себя' },
+  { key: 'q20', text: 'Как воспринимаешь критику?',
+    a: 'Как ценную обратную связь', b: 'С трудом — критика выбивает из колеи' },
+  { key: 'q21', text: 'Если проект провалился, ты...',
+    a: 'Честно анализирую свой вклад в провал', b: 'Предпочитаю не возвращаться к этой теме' },
+  { key: 'q22', text: 'Когда тебя отвергают, ты...',
+    a: 'Прошу фидбэк и готовлюсь попробовать снова', b: 'Долго переживаю и откладываю попытку' },
+  { key: 'q23', text: 'Ты справляешься с неопределённостью...',
+    a: 'Хорошо — это возможности', b: 'С трудом — неопределённость тревожит' },
+  { key: 'q24', text: 'Когда устал(а) и нет сил, ты...',
+    a: 'Отдыхаю осознанно, потом возвращаюсь', b: 'Теряю интерес, с трудом возвращаюсь' },
+
+  // ── Командная работа (25-32) ──
+  { key: 'q25', text: 'В групповом проекте ты...',
+    a: 'Беру роль лидера и организую', b: 'Выполняю свою часть, не мешая другим' },
+  { key: 'q26', text: 'Если партнёр работает плохо, ты...',
+    a: 'Честно говорю и предлагаю помощь', b: 'Молчу, но исправляю его ошибки' },
+  { key: 'q27', text: 'При конфликте в команде ты...',
+    a: 'Инициирую разговор для общего решения', b: 'Держусь в стороне и жду' },
+  { key: 'q28', text: 'Умеешь ли объяснять сложное простыми словами?',
+    a: 'Очень хорошо — это сильная сторона', b: 'С трудом — проще самому понять' },
+  { key: 'q29', text: 'Комфортно ли при публичных выступлениях?',
+    a: 'Да — нравится выступать', b: 'Сильно нервничаю или избегаю' },
+  { key: 'q30', text: 'Ты предпочитаешь работать...',
+    a: 'В команде — вместе продуктивнее', b: 'Самостоятельно' },
+  { key: 'q31', text: 'Когда кто-то высказывает другое мнение, ты...',
+    a: 'Слушаю внимательно и рассматриваю всерьёз', b: 'Стараюсь переубедить' },
+  { key: 'q32', text: 'Поддержка окружающих для твоей продуктивности...',
+    a: 'Очень важна — черпаю силы из окружения', b: 'Почти не влияет — я независим(а)' },
+
+  // ── Критическое мышление (33-40) ──
+  { key: 'q33', text: 'Если видишь лучший способ, чем предложенный, ты...',
+    a: 'Предлагаю свой и объясняю почему', b: 'Делаю как сказано' },
+  { key: 'q34', text: 'Берёшься за задачи, которые никто не делал?',
+    a: 'Часто — интересно быть первопроходцем', b: 'Редко — слишком рискованно' },
+  { key: 'q35', text: 'Если замечаешь проблему в организации, ты...',
+    a: 'Предлагаю решение и берусь его делать', b: 'Молчу — не моё дело' },
+  { key: 'q36', text: 'Когда тебе дают факт или мнение, ты...',
+    a: 'Проверяю источник и ищу подтверждение', b: 'Чаще принимаю на веру' },
+  { key: 'q37', text: 'Когда проект идёт хорошо, но можно лучше, ты...',
+    a: 'Всегда ищу как улучшить', b: 'Оставляю как есть — зачем рисковать' },
+  { key: 'q38', text: 'Твоё отношение к правилам...',
+    a: 'Понимаю смысл, следую, но задаю вопросы', b: 'Всегда следую — так безопаснее' },
+  { key: 'q39', text: 'Готов(а) взять ответственность за результат команды?',
+    a: 'Полностью — готов(а) отвечать за общее', b: 'Только за свою часть' },
+  { key: 'q40', text: 'Через 10 лет ты видишь себя...',
+    a: 'Профессионалом высокого уровня / предпринимателем', b: 'Пока сложно сказать — фокус на настоящем' },
 ];
 
-// ─── 40 Psychometric questions ────────────────────────────────────────────────
-// Each question has a key (used in the JSON), the question text,
-// and exactly 4 answer options (the selected text goes into the JSON).
-const PSYCHO_QUESTIONS = [
-  // ── Целеустремлённость и планирование (1–8) ───────────────────────────────
-  {
-    key: 'q1',
-    text: 'Когда у меня есть важная цель, я...',
-    options: [
-      'Сразу составляю план и строго следую ему',
-      'Держу цель в уме и действую по ситуации',
-      'Мотивируюсь, но часто откладываю на потом',
-      'Жду подходящего момента и вдохновения',
-    ],
-  },
-  {
-    key: 'q2',
-    text: 'Я склонен(на) ставить долгосрочные цели (на год и более)...',
-    options: [
-      'Да, всегда — у меня есть чёткий план на несколько лет',
-      'Иногда — если ситуация требует',
-      'Редко — предпочитаю краткосрочные задачи',
-      'Почти никогда — будущее слишком непредсказуемо',
-    ],
-  },
-  {
-    key: 'q3',
-    text: 'Если я не успеваю выполнить задачу в срок, я...',
-    options: [
-      'Пересматриваю план и нахожу способ наверстать',
-      'Расстраиваюсь, но продолжаю работу',
-      'Прошу помощи или переноса дедлайна',
-      'Бросаю задачу и перехожу к другой',
-    ],
-  },
-  {
-    key: 'q4',
-    text: 'Моя учёба или работа над проектами...',
-    options: [
-      'Всегда структурирована: расписание, задачи, дедлайны',
-      'Частично структурирована — по необходимости',
-      'Хаотична, но результат всё равно есть',
-      'Без системы, работаю только когда хочется',
-    ],
-  },
-  {
-    key: 'q5',
-    text: 'Когда у меня несколько задач одновременно, я...',
-    options: [
-      'Приоритизирую и делаю по очереди',
-      'Переключаюсь между задачами в зависимости от настроения',
-      'Берусь за всё сразу и часто не заканчиваю',
-      'Испытываю стресс и прокрастинирую',
-    ],
-  },
-  {
-    key: 'q6',
-    text: 'Как часто ты достигаешь целей, которые сам(а) себе ставишь?',
-    options: [
-      'Почти всегда — я ставлю реалистичные цели и выполняю их',
-      'Чаще да, чем нет',
-      'Примерно 50 на 50',
-      'Редко — цели часто остаются невыполненными',
-    ],
-  },
-  {
-    key: 'q7',
-    text: 'Что мешает тебе достигать целей чаще всего?',
-    options: [
-      'Ничего — я справляюсь со своими целями',
-      'Нехватка времени или ресурсов',
-      'Прокрастинация и отвлекающие факторы',
-      'Страх неудачи или неуверенность в себе',
-    ],
-  },
-  {
-    key: 'q8',
-    text: 'Когда ты учишься чему-то новому, ты предпочитаешь...',
-    options: [
-      'Чёткую структуру: курс, книга, шаги',
-      'Смешанный подход: теория + практика',
-      'Учиться на практике, методом проб и ошибок',
-      'Смотреть, как делают другие, и потом повторять',
-    ],
-  },
 
-  // ── Мотивация и страсть (9–16) ────────────────────────────────────────────
-  {
-    key: 'q9',
-    text: 'Что больше всего мотивирует тебя работать усердно?',
-    options: [
-      'Желание стать профессионалом в своём деле',
-      'Признание и похвала со стороны других',
-      'Финансовое вознаграждение и стабильность',
-      'Интерес к самому процессу обучения',
-    ],
-  },
-  {
-    key: 'q10',
-    text: 'Как ты чувствуешь себя, когда занимаешься чем-то интересным?',
-    options: [
-      'Теряю счёт времени — полностью погружаюсь',
-      'Работаю с удовольствием, но слежу за временем',
-      'Мне интересно, но я легко отвлекаюсь',
-      'Интерес быстро проходит',
-    ],
-  },
-  {
-    key: 'q11',
-    text: 'Если бы тебе не нужно было думать о деньгах, ты бы...',
-    options: [
-      'Продолжал(а) учиться и исследовать интересные области',
-      'Занялся(ась) любимым делом, которое сейчас не приносит доход',
-      'Путешествовал(а) и отдыхал(а)',
-      'Помогал(а) другим людям / волонтёрство',
-    ],
-  },
-  {
-    key: 'q12',
-    text: 'Когда тебе скучно в учёбе, ты...',
-    options: [
-      'Ищу более глубокий материал по теме сам(а)',
-      'Стараюсь найти практическое применение теории',
-      'Просто жду, пока это закончится',
-      'Перестаю вникать и переключаюсь на другое',
-    ],
-  },
-  {
-    key: 'q13',
-    text: 'Твоя учёбная активность вне школы/колледжа...',
-    options: [
-      'Высокая: онлайн-курсы, книги, проекты',
-      'Средняя: занимаюсь при наличии времени',
-      'Низкая: только если задали',
-      'Почти нулевая: хватает школы',
-    ],
-  },
-  {
-    key: 'q14',
-    text: 'Когда ты достигаешь цели, ты обычно...',
-    options: [
-      'Радуюсь и сразу ставлю новую, более высокую цель',
-      'Радуюсь и отдыхаю какое-то время',
-      'Чувствую облегчение, а не радость',
-      'Быстро теряю интерес к результату',
-    ],
-  },
-  {
-    key: 'q15',
-    text: 'Насколько тебе важно "быть лучшим" в своём деле?',
-    options: [
-      'Очень важно — я стремлюсь к мастерству',
-      'Важно, но не любой ценой',
-      'Мне важнее прогресс, чем сравнение с другими',
-      'Не особо важно — главное делать "достаточно хорошо"',
-    ],
-  },
-  {
-    key: 'q16',
-    text: 'Когда ты слышишь об успехе другого человека, ты...',
-    options: [
-      'Вдохновляюсь и думаю, как тоже достичь подобного',
-      'Искренне радуюсь за него/неё',
-      'Чувствую лёгкую зависть, но стараюсь с этим работать',
-      'Сравниваю себя с этим человеком и расстраиваюсь',
-    ],
-  },
-
-  // ── Стрессоустойчивость и resilience (17–24) ─────────────────────────────
-  {
-    key: 'q17',
-    text: 'Когда что-то пошло не по плану, ты первым делом...',
-    options: [
-      'Анализирую ситуацию и ищу новый путь',
-      'Позволяю себе расстроиться, потом собираюсь',
-      'Обсуждаю с кем-то близким, чтобы получить поддержку',
-      'Надолго застреваю в негативных мыслях',
-    ],
-  },
-  {
-    key: 'q18',
-    text: 'В стрессовых ситуациях (экзамен, конкурс, дедлайн) ты...',
-    options: [
-      'Концентрируюсь и работаю эффективнее обычного',
-      'Немного нервничаю, но справляюсь',
-      'Сильно переживаю, что мешает работе',
-      'Теряюсь и не могу продуктивно действовать',
-    ],
-  },
-  {
-    key: 'q19',
-    text: 'После серьёзной неудачи ты возвращаешься к нормальному состоянию...',
-    options: [
-      'Быстро — провал для меня это урок',
-      'Через несколько дней',
-      'Через несколько недель',
-      'Долго не могу прийти в себя',
-    ],
-  },
-  {
-    key: 'q20',
-    text: 'Как ты воспринимаешь критику своей работы?',
-    options: [
-      'Как ценную обратную связь для роста',
-      'Нейтрально — слушаю, фильтрую, применяю',
-      'С трудом — внутри обида, но стараюсь учесть',
-      'Болезненно — критика выбивает из колеи',
-    ],
-  },
-  {
-    key: 'q21',
-    text: 'Если проект провалился, ты...',
-    options: [
-      'Честно анализирую свой вклад в провал и делаю выводы',
-      'Ищу причины со стороны — обстоятельства, команда',
-      'Предпочитаю не возвращаться к этой теме',
-      'Сдаюсь и не пробую снова',
-    ],
-  },
-  {
-    key: 'q22',
-    text: 'Когда тебя отвергают (конкурс, программа, работа), ты...',
-    options: [
-      'Прошу фидбэк и готовлюсь попробовать снова',
-      'Расстраиваюсь, но продолжаю искать похожие возможности',
-      'Долго переживаю и откладываю следующую попытку',
-      'Отказываюсь от этого направления',
-    ],
-  },
-  {
-    key: 'q23',
-    text: 'Ты справляешься с неопределённостью...',
-    options: [
-      'Хорошо — неопределённость это возможности',
-      'Нормально — могу действовать без гарантий',
-      'С трудом — предпочитаю знать ответы заранее',
-      'Плохо — неопределённость сильно тревожит',
-    ],
-  },
-  {
-    key: 'q24',
-    text: 'Когда ты устал(а) и нет сил, ты...',
-    options: [
-      'Отдыхаю осознанно, потом возвращаюсь с новыми силами',
-      'Заставляю себя продолжать через силу',
-      'Откладываю всё и отдыхаю столько, сколько нужно',
-      'Теряю интерес и с трудом возвращаюсь',
-    ],
-  },
-
-  // ── Командная работа и коммуникация (25–32) ──────────────────────────────
-  {
-    key: 'q25',
-    text: 'В групповом проекте ты чаще всего...',
-    options: [
-      'Беру на себя роль лидера и организую команду',
-      'Участвую активно, но не претендую на лидерство',
-      'Выполняю свою часть и стараюсь не мешать другим',
-      'Предпочитаю работать в одиночку',
-    ],
-  },
-  {
-    key: 'q26',
-    text: 'Если партнёр по команде делает свою часть плохо, ты...',
-    options: [
-      'Честно говорю ему об этом и предлагаю помощь',
-      'Молчу, но исправляю его ошибки сам(а)',
-      'Сообщаю куратору или организатору',
-      'Делаю свою часть и отпускаю ситуацию',
-    ],
-  },
-  {
-    key: 'q27',
-    text: 'При конфликте в команде ты...',
-    options: [
-      'Инициирую разговор, чтобы найти общее решение',
-      'Стараюсь сгладить конфликт и помирить стороны',
-      'Держусь в стороне и жду, пока само разрешится',
-      'Принимаю одну из сторон, если считаю её правой',
-    ],
-  },
-  {
-    key: 'q28',
-    text: 'Насколько хорошо ты умеешь объяснять сложные вещи простыми словами?',
-    options: [
-      'Очень хорошо — это одна из моих сильных сторон',
-      'Неплохо, хотя иногда приходится упрощать чересчур',
-      'С трудом — мне проще самому понять, чем объяснить',
-      'Плохо — объяснение даётся с большим усилием',
-    ],
-  },
-  {
-    key: 'q29',
-    text: 'Ты комфортно чувствуешь себя при публичных выступлениях?',
-    options: [
-      'Да — мне нравится выступать перед аудиторией',
-      'Волнуюсь, но справляюсь',
-      'Сильно нервничаю, но выступаю',
-      'Стараюсь избегать публичных выступлений',
-    ],
-  },
-  {
-    key: 'q30',
-    text: 'Ты предпочитаешь работать...',
-    options: [
-      'В команде — вместе интереснее и продуктивнее',
-      'В паре или маленькой группе',
-      'Самостоятельно, но с возможностью обсудить',
-      'Только самостоятельно',
-    ],
-  },
-  {
-    key: 'q31',
-    text: 'Когда кто-то выражает другую точку зрения, ты...',
-    options: [
-      'Слушаю внимательно и рассматриваю её всерьёз',
-      'Слушаю, но остаюсь при своём мнении',
-      'Стараюсь переубедить его(её)',
-      'Теряюсь и не знаю, чью сторону принять',
-    ],
-  },
-  {
-    key: 'q32',
-    text: 'Поддержка людей вокруг тебя для твоей продуктивности...',
-    options: [
-      'Очень важна — черпаю силы из окружения',
-      'Полезна, но я могу работать и без неё',
-      'Почти не влияет — я независим(а)',
-      'Иногда мешает — отвлекают',
-    ],
-  },
-
-  // ── Критическое мышление и инициатива (33–40) ────────────────────────────
-  {
-    key: 'q33',
-    text: 'Когда тебя просят что-то сделать определённым способом, а ты видишь лучший способ, ты...',
-    options: [
-      'Предлагаю свой способ и объясняю почему',
-      'Делаю как сказано, но уточняю на будущее',
-      'Делаю как сказано, ничего не говоря',
-      'Делаю по-своему, не спрашивая',
-    ],
-  },
-  {
-    key: 'q34',
-    text: 'Ты берёшься за задачи, которые ещё никто не делал в твоём окружении...',
-    options: [
-      'Часто — мне интересно быть первопроходцем',
-      'Иногда, если чувствую, что справлюсь',
-      'Редко — предпочитаю проверенные пути',
-      'Почти никогда — слишком рискованно',
-    ],
-  },
-  {
-    key: 'q35',
-    text: 'Если ты замечаешь проблему в организации (школе, клубе, проекте), ты...',
-    options: [
-      'Предлагаю конкретное решение и берусь его реализовать',
-      'Говорю об этом ответственному человеку',
-      'Жалуюсь другим, но ничего не делаю',
-      'Молчу — не моё дело',
-    ],
-  },
-  {
-    key: 'q36',
-    text: 'Когда тебе дают факт или мнение, ты...',
-    options: [
-      'Проверяю источник и ищу подтверждение',
-      'Принимаю, если источник кажется надёжным',
-      'Чаще всего принимаю на веру',
-      'Принимаю, если это совпадает с моим мнением',
-    ],
-  },
-  {
-    key: 'q37',
-    text: 'Когда проект идёт хорошо, но можно сделать его лучше, ты...',
-    options: [
-      'Всегда ищу, как улучшить — "достаточно хорошо" не для меня',
-      'Улучшаю, если есть время и ресурсы',
-      'Оставляю как есть — зачем рисковать?',
-      'Не вижу смысла что-то менять в работающем',
-    ],
-  },
-  {
-    key: 'q38',
-    text: 'Твоё отношение к правилам...',
-    options: [
-      'Понимаю их смысл и следую им, но задаю вопросы',
-      'Следую правилам, если это разумно',
-      'Всегда следую правилам — так безопаснее',
-      'Правила для меня скорее ориентир, чем обязательство',
-    ],
-  },
-  {
-    key: 'q39',
-    text: 'Насколько ты готов(а) взять на себя ответственность за результат команды?',
-    options: [
-      'Полностью — я готов(а) отвечать за общий результат',
-      'За свою часть — и немного за общее',
-      'Только за свою часть',
-      'Предпочитаю, чтобы ответственность нёс кто-то другой',
-    ],
-  },
-  {
-    key: 'q40',
-    text: 'Через 10 лет ты видишь себя...',
-    options: [
-      'Профессионалом высокого уровня в конкретной области',
-      'Предпринимателем или основателем своего дела',
-      'Человеком с положительным влиянием на общество',
-      'Пока сложно сказать — я сосредоточен(а) на настоящем',
-    ],
-  },
+// ─── Языковой тест — 20 вопросов ─────────────────────────────────────────────
+// Каждый вопрос: text, 4 варианта (A/B/C/D), correct — правильный ответ
+const LANG_QUESTIONS = [
+  { key: 'q1',  text: 'Choose the correct sentence:',
+    options: ['She go to school every day.', 'She goes to school every day.', 'She going to school every day.', 'She are go to school every day.'], correct: 'B' },
+  { key: 'q2',  text: 'What is the past tense of "buy"?',
+    options: ['buyed', 'bought', 'buied', 'boughted'], correct: 'B' },
+  { key: 'q3',  text: '"I ___ to the cinema yesterday."',
+    options: ['go', 'goes', 'went', 'gone'], correct: 'C' },
+  { key: 'q4',  text: 'Choose the synonym for "happy":',
+    options: ['sad', 'joyful', 'angry', 'tired'], correct: 'B' },
+  { key: 'q5',  text: '"She has been studying ___ 3 hours."',
+    options: ['since', 'for', 'during', 'while'], correct: 'B' },
+  { key: 'q6',  text: 'Which sentence is correct?',
+    options: ['I have went there.', 'I have gone there.', 'I has gone there.', 'I have go there.'], correct: 'B' },
+  { key: 'q7',  text: '"If I ___ rich, I would travel the world."',
+    options: ['am', 'was', 'were', 'be'], correct: 'C' },
+  { key: 'q8',  text: 'Choose the antonym of "ancient":',
+    options: ['old', 'modern', 'historic', 'traditional'], correct: 'B' },
+  { key: 'q9',  text: '"By the time she arrived, the movie ___."',
+    options: ['started', 'has started', 'had started', 'was starting'], correct: 'C' },
+  { key: 'q10', text: '"I wish I ___ more time to study."',
+    options: ['have', 'has', 'had', 'having'], correct: 'C' },
+  { key: 'q11', text: 'Choose the correct word: "He speaks English ___."',
+    options: ['fluent', 'fluently', 'fluence', 'fluid'], correct: 'B' },
+  { key: 'q12', text: '"The book ___ by many students."',
+    options: ['is reading', 'is read', 'are read', 'reads'], correct: 'B' },
+  { key: 'q13', text: '"She asked me where I ___."',
+    options: ['live', 'lived', 'living', 'lives'], correct: 'B' },
+  { key: 'q14', text: 'Choose the correct form: "___ you ever been to London?"',
+    options: ['Do', 'Did', 'Have', 'Are'], correct: 'C' },
+  { key: 'q15', text: '"I\'m looking forward ___ you again."',
+    options: ['to see', 'to seeing', 'seeing', 'see'], correct: 'B' },
+  { key: 'q16', text: '"He ___ have left already; the office is empty."',
+    options: ['must', 'can', 'should', 'would'], correct: 'A' },
+  { key: 'q17', text: '"Despite ___ tired, she continued working."',
+    options: ['be', 'being', 'been', 'was'], correct: 'B' },
+  { key: 'q18', text: '"The more you practice, the ___ you get."',
+    options: ['good', 'better', 'best', 'well'], correct: 'B' },
+  { key: 'q19', text: '"I\'d rather you ___ to the meeting tomorrow."',
+    options: ['come', 'came', 'coming', 'will come'], correct: 'B' },
+  { key: 'q20', text: '"Not until the rain stopped ___ go outside."',
+    options: ['we could', 'could we', 'we can', 'can we'], correct: 'B' },
 ];
 
-// ─── DOM References ───────────────────────────────────────────────────────────
-const $ = id => document.getElementById(id);  // shortcut for getElementById
 
-// All 5 screen elements
-const screens = {
-  landing:  $('screen-landing'),
-  register: $('screen-register'),
-  login:    $('screen-login'),
-  form:     $('screen-form'),
-  results:  $('screen-results'),
-};
+// ─── Вспомогательные функции ──────────────────────────────────────────────────
 
-// ─── Screen routing ───────────────────────────────────────────────────────────
-// Hides all screens, shows only the target one.
+// Короткий доступ к document.getElementById
+const $ = (id) => document.getElementById(id);
+
+// Показать toast-уведомление
+function showToast(message, type = 'success') {
+  const container = $('toast-container');
+  const toast = document.createElement('div');
+  toast.className = `toast ${type}`;
+  toast.textContent = message;
+  container.appendChild(toast);
+
+  // Удалить через 4 секунды
+  setTimeout(() => {
+    toast.classList.add('out');
+    setTimeout(() => toast.remove(), 300);
+  }, 4000);
+}
+
+// Показать / скрыть loader
+function setLoader(visible) {
+  $('loader-overlay').classList.toggle('hidden', !visible);
+}
+
+
+// ═══════════════════════════════════════════════════
+// 1. ЭКРАНЫ — маршрутизация
+// ═══════════════════════════════════════════════════
+
 function showScreen(name) {
-  Object.values(screens).forEach(s => s.classList.remove('active'));
-  if (screens[name]) screens[name].classList.add('active');
+  /*
+   * Как работает:
+   * 1. Убираем класс active у всех .screen элементов → они скрываются (display:none)
+   * 2. Добавляем active к нужному → он появляется с анимацией (fadeSlideIn)
+   */
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  const target = $(`screen-${name}`);
+  if (target) target.classList.add('active');
+
+  // Прокрутка наверх при смене экрана
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-// ─── Header update ────────────────────────────────────────────────────────────
-// Shows "Hi, Name" + Logout button when logged in.
-function updateHeader() {
-  if (state.user) {
-    $('header-actions').classList.add('hidden');
-    $('header-user').classList.remove('hidden');
-    $('greeting-name').textContent = `${state.user.username}`;
-  } else {
-    $('header-actions').classList.remove('hidden');
-    $('header-user').classList.add('hidden');
-  }
-}
 
-// ─── API helper ───────────────────────────────────────────────────────────────
-// Makes a POST request to the backend and parses the JSON response.
-async function apiPost(endpoint, body) {
-  const res  = await fetch(`${API}${endpoint}`, {
-    method:  'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body:    JSON.stringify(body),
+// ═══════════════════════════════════════════════════
+// 2. ТЕМА — тёмная / светлая
+// ═══════════════════════════════════════════════════
+
+function initTheme() {
+  /*
+   * Как работает:
+   * - <html data-theme="dark"> — CSS переменные для тёмной темы
+   * - <html data-theme="light"> — CSS переменные для светлой темы
+   * - Все цвета в CSS используют var(--clr-*) → мгновенное переключение
+   * - Выбор сохраняется в localStorage
+   */
+  const saved = localStorage.getItem('theme') || 'dark';
+  document.documentElement.setAttribute('data-theme', saved);
+  updateThemeIcon(saved);
+
+  $('theme-toggle').addEventListener('click', () => {
+    const current = document.documentElement.getAttribute('data-theme');
+    const next = current === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('theme', next);
+    updateThemeIcon(next);
   });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.detail || 'Request failed');
-  return data;
 }
 
-// ─── Form utilities ───────────────────────────────────────────────────────────
-// Show/hide loading spinner inside a button
-function setLoading(btnId, spinnerId, loading) {
-  const btn    = $(btnId);
-  const spin   = $(spinnerId);
-  const text   = btn.querySelector('.btn-text');
-  btn.disabled = loading;
-  spin.classList.toggle('hidden', !loading);
-  if (text) text.style.opacity = loading ? '0.5' : '1';
+function updateThemeIcon(theme) {
+  $('theme-icon').textContent = theme === 'dark' ? '🌙' : '☀️';
 }
 
-// Show an error message box
-function showError(elId, msg) {
-  const el      = $(elId);
-  el.textContent = msg;
-  el.classList.remove('hidden');
-}
 
-function clearError(elId) {
-  $(elId).classList.add('hidden');
-}
+// ═══════════════════════════════════════════════════
+// 3. РЕГИСТРАЦИЯ — форма заявки
+// ═══════════════════════════════════════════════════
 
-// ─── AUTH: Register ───────────────────────────────────────────────────────────
-$('register-form').addEventListener('submit', async e => {
-  e.preventDefault();
-  clearError('register-error');
+// --- 3.1: Загрузка городов ---
 
-  const username = $('reg-username').value.trim();
-  const email    = $('reg-email').value.trim();
-  const password = $('reg-password').value;
-
-  if (!username || !email || !password)
-    return showError('register-error', 'Заполните все поля.');
-  if (password.length < 6)
-    return showError('register-error', 'Пароль — минимум 6 символов.');
-
-  setLoading('register-submit', 'register-spinner', true);
+async function loadCities() {
+  /*
+   * Алгоритм:
+   * 1. Запрашиваем GET /api/cities/ через API клиент
+   * 2. Получаем { cities: [...], languages: [...] }
+   * 3. Заполняем <select id="f-city"> опциями
+   * 4. Создаём чипсы (chips) для языков
+   *
+   * Fallback: если backend недоступен, используем встроенный список
+   */
   try {
-    const data  = await apiPost('/register', { username, email, password });
-    state.user  = data.user;
-    state.token = data.token;
-    updateHeader();
-    startForm();
-  } catch (err) {
-    showError('register-error', err.message);
-  } finally {
-    setLoading('register-submit', 'register-spinner', false);
+    const data = await API.getCities();
+    state.cities = data.cities || [];
+    state.languagesList = data.languages || [];
+  } catch (e) {
+    // Fallback — встроенный список (работает без backend)
+    state.cities = [
+      'Алматы','Астана','Шымкент','Актобе','Караганда','Тараз',
+      'Павлодар','Усть-Каменогорск','Семей','Костанай','Петропавловск',
+      'Кызылорда','Атырау','Актау','Уральск','Кокшетау','Талдыкорган',
+      'Конаев','Туркестан','Темиртау','Экибастуз','Рудный',
+      'Жанаозен','Балхаш','Кентау','Каскелен','Талгар','Риддер',
+    ].sort();
+    state.languagesList = [
+      'Казахский','Русский','Английский','Турецкий','Китайский',
+      'Немецкий','Французский','Корейский','Арабский','Испанский','Другой',
+    ];
+    console.warn('Backend недоступен, используем встроенный список городов');
   }
-});
 
-// ─── AUTH: Login ──────────────────────────────────────────────────────────────
-$('login-form').addEventListener('submit', async e => {
-  e.preventDefault();
-  clearError('login-error');
-
-  const email    = $('login-email').value.trim();
-  const password = $('login-password').value;
-
-  if (!email || !password)
-    return showError('login-error', 'Введите email и пароль.');
-
-  setLoading('login-submit', 'login-spinner', true);
-  try {
-    const data  = await apiPost('/login', { email, password });
-    state.user  = data.user;
-    state.token = data.token;
-    updateHeader();
-    startForm();
-  } catch (err) {
-    showError('login-error', err.message);
-  } finally {
-    setLoading('login-submit', 'login-spinner', false);
-  }
-});
-
-// ─── AUTH: Logout ─────────────────────────────────────────────────────────────
-$('btn-logout').addEventListener('click', () => {
-  state.user  = null;
-  state.token = null;
-  updateHeader();
-  showScreen('landing');
-});
-
-// ─── Navigation bindings ──────────────────────────────────────────────────────
-$('btn-show-register').addEventListener('click', () => showScreen('register'));
-$('btn-show-login').addEventListener('click',    () => showScreen('login'));
-$('switch-to-login').addEventListener('click',    e => { e.preventDefault(); showScreen('login'); });
-$('switch-to-register').addEventListener('click', e => { e.preventDefault(); showScreen('register'); });
-$('hero-start-btn').addEventListener('click', () => {
-  state.user ? startForm() : showScreen('register');
-});
-$('logo').addEventListener('click', () => showScreen('landing'));
-
-// ─── FORM: start ─────────────────────────────────────────────────────────────
-// Resets form state and renders block 0 (Basic Info).
-function startForm() {
-  state.currentBlock = 0;
-  renderBlock(0);
-  showScreen('form');
-}
-
-// ─── FORM: render a block ─────────────────────────────────────────────────────
-// Called every time the user moves to a different block.
-function renderBlock(index) {
-  const block    = BLOCKS[index];
-  const isLast   = index === BLOCKS.length - 1;
-
-  // Update progress
-  const pct = ((index + 1) / BLOCKS.length) * 100;
-  $('form-progress-fill').style.width = `${pct}%`;
-  $('form-progress-label').textContent = `${block.title} / ${BLOCKS.length} блоков`;
-
-  // Update block title
-  $('block-title').textContent    = block.title;
-  $('block-subtitle').textContent = block.subtitle;
-
-  // Render the fields for this block
-  const container = $('block-fields');
-  container.innerHTML = '';  // clear previous fields
-
-  if (block.type === 'basic_info')    renderBasicInfo(container);
-  if (block.type === 'experience')    renderExperience(container);
-  if (block.type === 'motivation')    renderMotivation(container);
-  if (block.type === 'psychometric')  renderPsychometric(container);
-  if (block.type === 'consents')      renderConsents(container);
-
-  // Navigation buttons
-  $('btn-form-prev').disabled     = index === 0;
-  $('btn-form-next').textContent  = isLast ? 'Отправить заявку ✓' : 'Следующий блок →';
-
-  // Animate in
-  const card = $('form-block-card');
-  card.style.animation = 'none';
-  void card.offsetWidth;
-  card.style.animation = '';
-}
-
-// ─── Block 1: Basic Info fields ───────────────────────────────────────────────
-function renderBasicInfo(container) {
-  container.innerHTML = `
-    <div class="field-group">
-      <label for="f-fullname">Имя и фамилия *</label>
-      <input type="text" id="f-fullname" placeholder="Иван Иванов"
-             value="${getSaved('basic_info','full_name')}" />
-    </div>
-    <div class="field-row">
-      <div class="field-group">
-        <label for="f-age">Возраст *</label>
-        <input type="number" id="f-age" placeholder="17" min="10" max="30"
-               value="${getSaved('basic_info','age')}" />
-      </div>
-      <div class="field-group">
-        <label for="f-city">Город *</label>
-        <input type="text" id="f-city" placeholder="Алматы"
-               value="${getSaved('basic_info','city')}" />
-      </div>
-    </div>
-    <div class="field-group">
-      <label for="f-school">Школа / Колледж *</label>
-      <input type="text" id="f-school" placeholder="NIS Алматы"
-             value="${getSaved('basic_info','school')}" />
-    </div>
-    <div class="field-group">
-      <label for="f-grade">Класс / Курс *</label>
-      <select id="f-grade">
-        <option value="">— выберите —</option>
-        ${['9','10','11','1 курс колледжа','Другое'].map(g =>
-          `<option value="${g}" ${getSaved('basic_info','grade')===g?'selected':''}>${g}</option>`
-        ).join('')}
-      </select>
-    </div>
-    <div class="field-row">
-      <div class="field-group">
-        <label for="f-email">Email *</label>
-        <input type="email" id="f-email" placeholder="ivan@example.com"
-               value="${getSaved('basic_info','email')}" />
-      </div>
-      <div class="field-group">
-        <label for="f-phone">Телефон *</label>
-        <input type="tel" id="f-phone" placeholder="+7 777 000 00 00"
-               value="${getSaved('basic_info','phone')}" />
-      </div>
-    </div>
-  `;
-}
-
-// ─── Block 2: Experience fields ───────────────────────────────────────────────
-function renderExperience(container) {
-  const fields = [
-    { id: 'f-projects',      label: 'Расскажи о проектах, в которых ты участвовал(а) — школьных, личных, волонтёрских',      key: 'projects' },
-    { id: 'f-self-projects', label: 'Были ли проекты, которые ты начал(а) сам(а)? Если да, опиши кратко',                    key: 'self_projects' },
-    { id: 'f-competitions',  label: 'В каких олимпиадах, конкурсах или хакатонах ты участвовал(а)? Укажи результаты',        key: 'competitions' },
-    { id: 'f-volunteering',  label: 'Есть ли у тебя опыт волонтёрства или общественной деятельности?',                       key: 'volunteering' },
-    { id: 'f-selflearn',     label: 'Чему ты научился(ась) за последний год вне школьной программы?',                         key: 'self_learning' },
-    { id: 'f-mentor',        label: 'Есть ли у тебя ментор или человек, который повлиял на твоё развитие? Кто это и как?',   key: 'mentor' },
-  ];
-
-  container.innerHTML = fields.map(f => `
-    <div class="field-group">
-      <label for="${f.id}">${f.label}</label>
-      <textarea id="${f.id}" rows="4" placeholder="Опиши подробно...">${getSaved('experience', f.key)}</textarea>
-    </div>
-  `).join('');
-}
-
-// ─── Block 3: Motivation & Essays ─────────────────────────────────────────────
-function renderMotivation(container) {
-  const fields = [
-    {
-      id: 'f-why',
-      label: 'Почему ты хочешь поступить в inVision U?',
-      key: 'why_invision',
-      minWords: 150,
-      placeholder: 'Минимум 150 слов...',
-    },
-    {
-      id: 'f-difficult',
-      label: 'Опиши ситуацию, когда тебе было сложно, но ты не сдался/не сдалась. Что произошло и чему ты научился(ась)?',
-      key: 'difficult_situation',
-      minWords: 100,
-      placeholder: 'Минимум 100 слов...',
-    },
-    {
-      id: 'f-community',
-      label: 'Какую проблему в своём городе или сообществе ты хотел(а) бы решить и почему?',
-      key: 'community_problem',
-      minWords: 100,
-      placeholder: 'Минимум 100 слов...',
-    },
-  ];
-
-  container.innerHTML = fields.map(f => `
-    <div class="field-group essay-field">
-      <label for="${f.id}">${f.label}</label>
-      <div class="essay-hint">Минимум ${f.minWords} слов</div>
-      <textarea id="${f.id}" rows="7" placeholder="${f.placeholder}"
-                data-min-words="${f.minWords}"
-                oninput="updateWordCount('${f.id}')"
-      >${getSaved('motivation', f.key)}</textarea>
-      <div class="word-count" id="wc-${f.id}">0 / ${f.minWords} слов</div>
-    </div>
-  `).join('');
-
-  // Run word count on initial render (for restored values)
-  fields.forEach(f => updateWordCount(f.id));
-}
-
-// Live word counter for essay fields
-window.updateWordCount = function(id) {
-  const textarea = $(id);
-  const wc       = $('wc-' + id);
-  if (!textarea || !wc) return;
-  const words    = countWords(textarea.value);
-  const min      = parseInt(textarea.dataset.minWords);
-  wc.textContent = `${words} / ${min} слов`;
-  wc.style.color = words >= min ? '#5eead4' : '#94a3b8';
-};
-
-function countWords(text) {
-  return text.trim().split(/\s+/).filter(w => w.length > 0).length;
-}
-
-// ─── Block 4: Psychometric test (40 radio questions) ─────────────────────────
-function renderPsychometric(container) {
-  const saved = getSavedPsycho();  // previously selected answers
-
-  container.innerHTML = PSYCHO_QUESTIONS.map((q, i) => `
-    <div class="psycho-question" id="pq-${q.key}">
-      <div class="psycho-q-header">
-        <span class="psycho-num">${i + 1}</span>
-        <p class="psycho-text">${q.text}</p>
-      </div>
-      <div class="psycho-options">
-        ${q.options.map((opt, oi) => `
-          <label class="radio-option ${saved[q.key] === opt ? 'selected' : ''}"
-                 for="${q.key}-opt${oi}">
-            <input type="radio"
-                   id="${q.key}-opt${oi}"
-                   name="${q.key}"
-                   value="${opt}"
-                   ${saved[q.key] === opt ? 'checked' : ''}
-                   onchange="onRadioChange('${q.key}', this)"
-            />
-            <span class="radio-circle"></span>
-            <span class="radio-label">${opt}</span>
-          </label>
-        `).join('')}
-      </div>
-    </div>
-  `).join('');
-}
-
-// Called when a radio button changes — highlights the selected option
-window.onRadioChange = function(key, input) {
-  const group = document.querySelectorAll(`[name="${key}"]`);
-  group.forEach(r => {
-    r.closest('.radio-option').classList.toggle('selected', r.checked);
+  // Заполняем dropdown городов
+  const select = $('f-city');
+  state.cities.forEach(city => {
+    const opt = document.createElement('option');
+    opt.value = city;
+    opt.textContent = city;
+    select.appendChild(opt);
   });
-};
 
-// ─── Block 5: Consents ────────────────────────────────────────────────────────
-function renderConsents(container) {
-  const saved = getSaved('consents', null) || {};
-
-  container.innerHTML = `
-    <div class="consents-block">
-      <p class="consents-intro">
-        Пожалуйста, ознакомься с условиями и подтверди своё согласие.
-        Оба пункта обязательны для подачи заявки.
-      </p>
-
-      <label class="checkbox-option" for="c-data">
-        <input type="checkbox" id="c-data" ${saved.data_processing ? 'checked' : ''} />
-        <span class="checkbox-box"></span>
-        <span class="checkbox-label">
-          Я даю согласие на обработку персональных данных в рамках отбора в inVision U
-          <span class="required-star">*</span>
-        </span>
-      </label>
-
-      <label class="checkbox-option" for="c-essay">
-        <input type="checkbox" id="c-essay" ${saved.essay_authenticity ? 'checked' : ''} />
-        <span class="checkbox-box"></span>
-        <span class="checkbox-label">
-          Я подтверждаю, что эссе написано мной лично
-          <span class="required-star">*</span>
-        </span>
-      </label>
-
-      <div class="form-error hidden" id="consents-error"></div>
-    </div>
-  `;
+  // Создаём чипсы языков
+  renderLanguageChips();
 }
 
-// ─── Saved data helpers ───────────────────────────────────────────────────────
-// We keep collected data in a global object so navigating between blocks
-// doesn't erase previously entered answers.
-const formData = {};
+// --- 3.2: Чипсы языков (multi-select) ---
 
-function getSaved(block, field) {
-  if (!formData[block]) return '';
-  if (field === null) return formData[block];
-  return formData[block][field] || '';
-}
+function renderLanguageChips() {
+  /*
+   * Чипсы — это кнопки-тоглы. Клик → selected/deselected.
+   * state.selectedLangs хранит массив выбранных языков.
+   */
+  const container = $('lang-chips');
+  container.innerHTML = '';
 
-function getSavedPsycho() {
-  return formData['psychometric'] || {};
-}
+  state.languagesList.forEach(lang => {
+    const chip = document.createElement('span');
+    chip.className = 'chip';
+    chip.textContent = lang;
+    chip.dataset.lang = lang;
 
-// ─── Collect data from the current block ─────────────────────────────────────
-// Returns true if valid, false if there's a missing required field.
-function collectCurrentBlock() {
-  const type = BLOCKS[state.currentBlock].type;
-
-  if (type === 'basic_info') {
-    const full_name = $('f-fullname')?.value.trim();
-    const age       = $('f-age')?.value.trim();
-    const city      = $('f-city')?.value.trim();
-    const school    = $('f-school')?.value.trim();
-    const grade     = $('f-grade')?.value;
-    const email     = $('f-email')?.value.trim();
-    const phone     = $('f-phone')?.value.trim();
-
-    if (!full_name || !age || !city || !school || !grade || !email || !phone) {
-      alert('Пожалуйста, заполните все поля Блока 1.');
-      return false;
-    }
-    formData['basic_info'] = { full_name, age: parseInt(age), city, school, grade, email, phone };
-  }
-
-  if (type === 'experience') {
-    formData['experience'] = {
-      projects:      $('f-projects')?.value.trim()      || '',
-      self_projects: $('f-self-projects')?.value.trim() || '',
-      competitions:  $('f-competitions')?.value.trim()  || '',
-      volunteering:  $('f-volunteering')?.value.trim()  || '',
-      self_learning: $('f-selflearn')?.value.trim()     || '',
-      mentor:        $('f-mentor')?.value.trim()         || '',
-    };
-  }
-
-  if (type === 'motivation') {
-    const why    = $('f-why')?.value.trim()       || '';
-    const diff   = $('f-difficult')?.value.trim() || '';
-    const comm   = $('f-community')?.value.trim() || '';
-
-    // Enforce minimum word counts
-    if (countWords(why) < 150) {
-      alert('Эссе "Почему inVision U?" должно содержать минимум 150 слов.');
-      return false;
-    }
-    if (countWords(diff) < 100) {
-      alert('Эссе о трудной ситуации должно содержать минимум 100 слов.');
-      return false;
-    }
-    if (countWords(comm) < 100) {
-      alert('Эссе о проблеме сообщества должно содержать минимум 100 слов.');
-      return false;
-    }
-    formData['motivation'] = {
-      why_invision:         why,
-      difficult_situation:  diff,
-      community_problem:    comm,
-    };
-  }
-
-  if (type === 'psychometric') {
-    // Check that all 40 questions are answered
-    const answers = {};
-    let unanswered = [];
-
-    PSYCHO_QUESTIONS.forEach(q => {
-      const selected = document.querySelector(`[name="${q.key}"]:checked`);
-      if (selected) {
-        answers[q.key] = selected.value;
+    chip.addEventListener('click', () => {
+      chip.classList.toggle('selected');
+      if (chip.classList.contains('selected')) {
+        state.selectedLangs.push(lang);
       } else {
-        unanswered.push(q.key);
+        state.selectedLangs = state.selectedLangs.filter(l => l !== lang);
       }
     });
 
-    if (unanswered.length > 0) {
-      // Scroll to first unanswered question
-      const firstMissing = $('pq-' + unanswered[0]);
-      if (firstMissing) firstMissing.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      alert(`Пожалуйста, ответь на все 40 вопросов. Не отвечено: ${unanswered.length}`);
-      return false;
-    }
-
-    formData['psychometric'] = answers;
-  }
-
-  if (type === 'consents') {
-    const dataOk  = $('c-data')?.checked;
-    const essayOk = $('c-essay')?.checked;
-
-    if (!dataOk || !essayOk) {
-      showError('consents-error', 'Необходимо принять оба согласия для подачи заявки.');
-      return false;
-    }
-    formData['consents'] = {
-      data_processing:   true,
-      essay_authenticity: true,
-    };
-  }
-
-  return true;  // all good
-}
-
-// ─── Navigation: Next / Prev ──────────────────────────────────────────────────
-$('btn-form-next').addEventListener('click', async () => {
-  // Collect and validate the current block first
-  if (!collectCurrentBlock()) return;
-
-  const isLast = state.currentBlock === BLOCKS.length - 1;
-
-  if (isLast) {
-    // Last block (consents) → submit to backend
-    await submitApplication();
-  } else {
-    state.currentBlock++;
-    renderBlock(state.currentBlock);
-  }
-});
-
-$('btn-form-prev').addEventListener('click', () => {
-  collectCurrentBlock();  // save silently (no validation on back)
-  if (state.currentBlock > 0) {
-    state.currentBlock--;
-    renderBlock(state.currentBlock);
-  }
-});
-
-// ─── Submit application to backend ───────────────────────────────────────────
-async function submitApplication() {
-  const btn  = $('btn-form-next');
-  btn.disabled    = true;
-  btn.textContent = 'Отправляем... ⏳';
-
-  try {
-    // Build the full payload
-    const payload = {
-      user_id:     state.user.id,
-      basic_info:  formData['basic_info'],
-      experience:  formData['experience'],
-      motivation:  formData['motivation'],
-      psychometric: formData['psychometric'],
-      consents:    formData['consents'],
-    };
-
-    // POST to /api/submit-answers
-    const response = await apiPost('/submit-answers', payload);
-
-    // Show results screen with the JSON from the server
-    showResults(response);
-    showScreen('results');
-  } catch (err) {
-    alert('Ошибка при отправке: ' + err.message);
-    btn.disabled    = false;
-    btn.textContent = 'Отправить заявку ✓';
-  }
-}
-
-// ─── Results: show the JSON response ─────────────────────────────────────────
-function showResults(response) {
-  // Pretty-print the backend JSON response
-  const formatted = JSON.stringify(response, null, 2);
-  $('json-output').textContent = formatted;
-  $('results-subtitle').textContent =
-    `Заявка от ${state.user.username} успешно сохранена в базе данных.`;
-}
-
-// ─── Copy JSON button ─────────────────────────────────────────────────────────
-$('btn-copy-json').addEventListener('click', () => {
-  const text = $('json-output').textContent;
-  navigator.clipboard.writeText(text).then(() => {
-    $('btn-copy-json').textContent = 'Скопировано ✓';
-    setTimeout(() => ($('btn-copy-json').textContent = 'Copy'), 2000);
+    container.appendChild(chip);
   });
+}
+
+// --- 3.3: Город → Регион ---
+
+function initCityRegion() {
+  /*
+   * Логика:
+   * 1. Пользователь выбирает город
+   * 2. Отправляем GET /api/cities/<город>/regions/
+   * 3. Получаем { city: "Алматы", region: "город Алматы" }
+   * 4. Вставляем регион в readonly поле
+   */
+  $('f-city').addEventListener('change', async (e) => {
+    const city = e.target.value;
+    const regionInput = $('f-region');
+
+    if (!city) {
+      regionInput.value = '';
+      return;
+    }
+
+    try {
+      const data = await API.getRegion(city);
+      regionInput.value = data.region || '';
+    } catch {
+      // Fallback — простой маппинг
+      regionInput.value = city + ' (регион)';
+    }
+  });
+}
+
+// --- 3.4: Валидация и отправка формы ---
+
+function initRegistrationForm() {
+  $('register-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    // Собираем данные из полей
+    const name     = $('f-name').value.trim();
+    const city     = $('f-city').value;
+    const region   = $('f-region').value.trim();
+    const telegram = $('f-telegram').value.trim();
+    const hobbies  = $('f-hobbies').value.trim();
+    const sport    = $('f-sport').value.trim();
+    const langs    = state.selectedLangs;
+
+    // Валидация
+    const errorEl = $('reg-error');
+    errorEl.classList.add('hidden');
+
+    if (!name || !city || !telegram) {
+      errorEl.textContent = t('err_fill_all');
+      errorEl.classList.remove('hidden');
+      return;
+    }
+    if (langs.length === 0) {
+      errorEl.textContent = t('err_select_lang');
+      errorEl.classList.remove('hidden');
+      return;
+    }
+    if (telegram.length < 3) {
+      errorEl.textContent = t('err_tg_format');
+      errorEl.classList.remove('hidden');
+      return;
+    }
+
+    // Формируем JSON для отправки
+    const payload = {
+      name:               name,
+      city:               city,
+      region:             region,
+      languages:          langs,
+      telegram_username:  telegram.startsWith('@') ? telegram : `@${telegram}`,
+      hobbies:            hobbies,
+      sport:              sport,
+    };
+
+    // Отправляем в backend
+    const submitBtn = $('reg-submit');
+    const spinner   = $('reg-spinner');
+    const btnText   = submitBtn.querySelector('.btn-text');
+
+    submitBtn.disabled = true;
+    spinner.classList.remove('hidden');
+    if (btnText) btnText.style.opacity = '0.5';
+
+    try {
+      const result = await API.submitApplication(payload);
+      state.applicationId = result.id;
+      showToast('Анкета сохранена! Переходим к MBTI тесту.', 'success');
+
+      // Переходим к MBTI тесту
+      startMBTI();
+    } catch (err) {
+      errorEl.textContent = err.message || t('send_error');
+      errorEl.classList.remove('hidden');
+      showToast(err.message || t('send_error'), 'error');
+    } finally {
+      submitBtn.disabled = false;
+      spinner.classList.add('hidden');
+      if (btnText) btnText.style.opacity = '1';
+    }
+  });
+}
+
+
+// ═══════════════════════════════════════════════════
+// 4. MBTI ТЕСТ — 40 вопросов по одному
+// ═══════════════════════════════════════════════════
+
+function startMBTI() {
+  state.mbtiIndex = 0;
+  state.mbtiAnswers = {};
+  renderMBTIQuestion();
+  showScreen('mbti');
+}
+
+function renderMBTIQuestion() {
+  /*
+   * Как работает пошаговый тест:
+   * 1. Берём текущий вопрос по индексу state.mbtiIndex
+   * 2. Обновляем текст, номер, прогресс-бар
+   * 3. Рендерим 2 кнопки-варианта (A и B)
+   * 4. При клике → запоминаем ответ и подсвечиваем
+   * 5. Кнопка «Далее» → следующий вопрос
+   */
+  const q = MBTI_QUESTIONS[state.mbtiIndex];
+  const total = MBTI_QUESTIONS.length;
+  const idx = state.mbtiIndex;
+
+  // Прогресс
+  const pct = ((idx + 1) / total) * 100;
+  $('mbti-progress-fill').style.width = `${pct}%`;
+  $('mbti-progress-label').textContent = `${idx + 1} / ${total}`;
+
+  // Номер и текст вопроса
+  $('mbti-q-num').textContent = idx + 1;
+  $('mbti-q-text').textContent = q.text;
+
+  // Варианты ответов
+  const container = $('mbti-options');
+  container.innerHTML = '';
+
+  ['A', 'B'].forEach(letter => {
+    const text = letter === 'A' ? q.a : q.b;
+    const option = document.createElement('div');
+    option.className = 'test-option';
+    if (state.mbtiAnswers[q.key] === letter) option.classList.add('selected');
+
+    option.innerHTML = `
+      <div class="test-option-circle"></div>
+      <span class="test-option-text">${text}</span>
+    `;
+
+    option.addEventListener('click', () => {
+      state.mbtiAnswers[q.key] = letter;
+      container.querySelectorAll('.test-option').forEach(o => o.classList.remove('selected'));
+      option.classList.add('selected');
+    });
+
+    container.appendChild(option);
+  });
+
+  // Навигация
+  $('mbti-prev').disabled = idx === 0;
+
+  const nextBtn = $('mbti-next');
+  const isLast = idx === total - 1;
+  nextBtn.textContent = isLast ? t('finish_mbti') : t('next_q');
+}
+
+function initMBTINav() {
+  // Кнопка «Далее»
+  $('mbti-next').addEventListener('click', async () => {
+    const q = MBTI_QUESTIONS[state.mbtiIndex];
+
+    // Проверяем что ответ выбран
+    if (!state.mbtiAnswers[q.key]) {
+      showToast(t('mbti_pick'), 'warning');
+      return;
+    }
+
+    const isLast = state.mbtiIndex === MBTI_QUESTIONS.length - 1;
+
+    if (isLast) {
+      // Все 40 вопросов отвечены → отправляем
+      await submitMBTI();
+    } else {
+      state.mbtiIndex++;
+      renderMBTIQuestion();
+    }
+  });
+
+  // Кнопка «Назад»
+  $('mbti-prev').addEventListener('click', () => {
+    if (state.mbtiIndex > 0) {
+      state.mbtiIndex--;
+      renderMBTIQuestion();
+    }
+  });
+}
+
+async function submitMBTI() {
+  setLoader(true);
+  try {
+    await API.submitMBTI(state.applicationId, state.mbtiAnswers);
+    showToast('MBTI тест завершён! Переходим к языковому тесту.', 'success');
+    startLangTest();
+  } catch (err) {
+    showToast(err.message || t('send_error'), 'error');
+  } finally {
+    setLoader(false);
+  }
+}
+
+
+// ═══════════════════════════════════════════════════
+// 5. ЯЗЫКОВОЙ ТЕСТ — 20 вопросов + таймер + вкладка
+// ═══════════════════════════════════════════════════
+
+function startLangTest() {
+  state.langIndex = 0;
+  state.langAnswers = {};
+  state.langTimer = 600; // 10 минут
+  state.violations = 0;
+  state.langBlocked = false;
+  state.langStartTime = new Date();
+
+  $('violation-badge').classList.add('hidden');
+
+  renderLangQuestion();
+  startTimer();
+  startTabDetection();
+  showScreen('lang-test');
+}
+
+function renderLangQuestion() {
+  const q = LANG_QUESTIONS[state.langIndex];
+  const total = LANG_QUESTIONS.length;
+  const idx = state.langIndex;
+
+  // Прогресс
+  const pct = ((idx + 1) / total) * 100;
+  $('lang-progress-fill').style.width = `${pct}%`;
+  $('lang-progress-label').textContent = `${idx + 1} / ${total}`;
+
+  // Номер и текст
+  $('lang-q-num').textContent = idx + 1;
+  $('lang-q-text').textContent = q.text;
+
+  // Варианты (A, B, C, D)
+  const container = $('lang-options');
+  container.innerHTML = '';
+
+  const letters = ['A', 'B', 'C', 'D'];
+  q.options.forEach((text, i) => {
+    const letter = letters[i];
+    const option = document.createElement('div');
+    option.className = 'test-option';
+    if (state.langAnswers[q.key] === letter) option.classList.add('selected');
+
+    option.innerHTML = `
+      <div class="test-option-circle"></div>
+      <span class="test-option-text">${letter}. ${text}</span>
+    `;
+
+    option.addEventListener('click', () => {
+      if (state.langBlocked) return;
+      state.langAnswers[q.key] = letter;
+      container.querySelectorAll('.test-option').forEach(o => o.classList.remove('selected'));
+      option.classList.add('selected');
+    });
+
+    container.appendChild(option);
+  });
+
+  // Навигация
+  $('lang-prev').disabled = idx === 0;
+
+  const nextBtn = $('lang-next');
+  const isLast = idx === total - 1;
+  nextBtn.textContent = isLast ? t('finish_lang') : t('next_q');
+}
+
+function initLangNav() {
+  $('lang-next').addEventListener('click', async () => {
+    if (state.langBlocked) return;
+
+    const isLast = state.langIndex === LANG_QUESTIONS.length - 1;
+
+    if (isLast) {
+      await submitLangTest();
+    } else {
+      state.langIndex++;
+      renderLangQuestion();
+    }
+  });
+
+  $('lang-prev').addEventListener('click', () => {
+    if (state.langBlocked) return;
+    if (state.langIndex > 0) {
+      state.langIndex--;
+      renderLangQuestion();
+    }
+  });
+}
+
+
+// --- 5.1: Таймер ---
+
+function startTimer() {
+  /*
+   * Как работает таймер:
+   * 1. state.langTimer = 600 (10 минут в секундах)
+   * 2. Каждую секунду уменьшаем на 1
+   * 3. Обновляем отображение (MM:SS)
+   * 4. Меняем цвет: зелёный → жёлтый (<3мин) → красный (<1мин)
+   * 5. Когда 0 → автоматически отправляем тест
+   */
+  updateTimerDisplay();
+
+  state.langTimerId = setInterval(() => {
+    state.langTimer--;
+    updateTimerDisplay();
+
+    if (state.langTimer <= 0) {
+      clearInterval(state.langTimerId);
+      showToast(t('time_up'), 'warning');
+      submitLangTest();
+    }
+  }, 1000);
+}
+
+function updateTimerDisplay() {
+  const minutes = Math.floor(state.langTimer / 60);
+  const seconds = state.langTimer % 60;
+  const display = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+
+  const timerEl = $('lang-timer');
+  timerEl.textContent = display;
+
+  // Изменяем стиль в зависимости от оставшегося времени
+  timerEl.classList.remove('warning', 'danger');
+  if (state.langTimer <= 60) {
+    timerEl.classList.add('danger');       // < 1 мин — красный, мигающий
+  } else if (state.langTimer <= 180) {
+    timerEl.classList.add('warning');      // < 3 мин — жёлтый
+  }
+}
+
+
+// --- 5.2: Контроль выхода из вкладки ---
+
+function startTabDetection() {
+  /*
+   * Как работает проверка вкладки:
+   *
+   * document.visibilitychange — событие браузера, которое срабатывает когда:
+   *   - Пользователь переключается на другую вкладку
+   *   - Пользователь сворачивает окно
+   *   - Пользователь alt-tab в другое приложение
+   *
+   * document.hidden === true  → вкладка НЕ видна
+   * document.hidden === false → вкладка видна (вернулся)
+   *
+   * Логика:
+   *   1-й раз (violations === 1): показываем предупреждение (toast)
+   *   2-й раз (violations === 2): блокируем тест и автоматически отправляем
+   */
+  const handler = () => {
+    if (document.hidden && !state.langBlocked) {
+      state.violations++;
+
+      // Обновляем badge
+      $('violation-badge').classList.remove('hidden');
+      $('violation-text').textContent = `${t('violations').split(':')[0]}: ${state.violations}`;
+
+      if (state.violations === 1) {
+        // Первый раз — предупреждение
+        showToast(t('violation_warn'), 'warning');
+      } else if (state.violations >= 2) {
+        // Второй раз — блокировка
+        state.langBlocked = true;
+        showToast(t('violation_block'), 'error');
+        // Автоматическая отправка через 2 секунды
+        setTimeout(() => submitLangTest(), 2000);
+      }
+    }
+  };
+
+  document.addEventListener('visibilitychange', handler);
+
+  // Сохраняем ссылку на handler чтобы можно было удалить
+  state._tabHandler = handler;
+}
+
+function stopTabDetection() {
+  if (state._tabHandler) {
+    document.removeEventListener('visibilitychange', state._tabHandler);
+    state._tabHandler = null;
+  }
+}
+
+
+// --- 5.3: Подсчёт и отправка ---
+
+function calculateLangScore() {
+  let score = 0;
+  LANG_QUESTIONS.forEach(q => {
+    if (state.langAnswers[q.key] === q.correct) {
+      score++;
+    }
+  });
+  return score;
+}
+
+async function submitLangTest() {
+  // Останавливаем таймер и детекцию вкладки
+  if (state.langTimerId) clearInterval(state.langTimerId);
+  stopTabDetection();
+
+  const timeSpent = Math.round((new Date() - state.langStartTime) / 1000);
+  const score = calculateLangScore();
+
+  const payload = {
+    application_id:     state.applicationId,
+    language:           'Английский',
+    answers:            state.langAnswers,
+    score:              score,
+    max_score:          LANG_QUESTIONS.length,
+    time_spent_seconds: timeSpent,
+    violation_count:    state.violations,
+  };
+
+  setLoader(true);
+  try {
+    await API.submitLanguageTest(payload);
+    showToast(t('success_title'), 'success');
+    showScreen('success');
+  } catch (err) {
+    showToast(err.message || t('send_error'), 'error');
+    // Всё равно показываем success — данные могли сохраниться
+    showScreen('success');
+  } finally {
+    setLoader(false);
+  }
+}
+
+
+// ═══════════════════════════════════════════════════
+// 6. НАВИГАЦИЯ — кнопки и ссылки
+// ═══════════════════════════════════════════════════
+
+function initNavigation() {
+  // Кнопка «Подать заявку» на Hero экране
+  $('hero-start-btn').addEventListener('click', () => showScreen('register'));
+
+  // Кнопка «Подать заявку» в header
+  $('btn-start-header').addEventListener('click', () => showScreen('register'));
+
+  // Кнопка «Войти» → login экран
+  $('btn-login').addEventListener('click', () => showScreen('login'));
+
+  // Логотип → на главную
+  $('logo').addEventListener('click', () => showScreen('landing'));
+
+  // Кнопка «На главную» на success экране
+  $('btn-home').addEventListener('click', () => showScreen('landing'));
+
+  // Ссылка «На главную» на login экране
+  $('login-back').addEventListener('click', (e) => {
+    e.preventDefault();
+    showScreen('landing');
+  });
+}
+
+
+// ═══════════════════════════════════════════════════
+// 7. ЛОГИН АДМИНА
+// ═══════════════════════════════════════════════════
+
+function initLogin() {
+  $('login-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const username = $('login-username').value.trim();
+    const password = $('login-password').value.trim();
+    const errorEl  = $('login-error');
+    const submitBtn = $('login-submit');
+    const spinner   = $('login-spinner');
+
+    errorEl.classList.add('hidden');
+
+    if (!username || !password) {
+      errorEl.textContent = t('err_fill_all');
+      errorEl.classList.remove('hidden');
+      return;
+    }
+
+    submitBtn.disabled = true;
+    spinner.classList.remove('hidden');
+
+    try {
+      const response = await fetch('/panel/login/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        showToast(t('login_ok'), 'success');
+        // Redirect to admin panel
+        window.location.href = '/panel/';
+      } else {
+        errorEl.textContent = data.error || t('login_fail');
+        errorEl.classList.remove('hidden');
+      }
+    } catch (err) {
+      errorEl.textContent = t('login_fail');
+      errorEl.classList.remove('hidden');
+    } finally {
+      submitBtn.disabled = false;
+      spinner.classList.add('hidden');
+    }
+  });
+}
+
+
+// ═══════════════════════════════════════════════════
+// 8. ИНИЦИАЛИЗАЦИЯ — запуск всего
+// ═══════════════════════════════════════════════════
+
+document.addEventListener('DOMContentLoaded', () => {
+  initTheme();
+  initNavigation();
+  initLogin();
+  initRegistrationForm();
+  initCityRegion();
+  initMBTINav();
+  initLangNav();
+  loadCities();
+  showScreen('landing');
 });
-
-// ─── Results actions ──────────────────────────────────────────────────────────
-$('btn-retake').addEventListener('click', () => {
-  Object.keys(formData).forEach(k => delete formData[k]);
-  startForm();
-});
-
-$('btn-home').addEventListener('click', () => showScreen('landing'));
-
-// ─── Init ─────────────────────────────────────────────────────────────────────
-updateHeader();
-showScreen('landing');

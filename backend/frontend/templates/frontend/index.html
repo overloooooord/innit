@@ -2,6 +2,11 @@
 {% block title %}Кандидаты — InVision U{% endblock %}
 
 {% block content %}
+<div class="page-header">
+    <h1>Кандидаты</h1>
+    <p>Список заявок кандидатов InVision U</p>
+</div>
+
 <!-- Stats bar -->
 <div class="stats-bar" id="statsBar">
     <div class="stat-card">
@@ -9,15 +14,15 @@
         <div class="stat-desc">Всего кандидатов</div>
     </div>
     <div class="stat-card">
-        <div class="stat-number" id="statShortlist" style="--accent:#22c55e; background:linear-gradient(135deg,#22c55e,#34d399);-webkit-background-clip:text;background-clip:text;">—</div>
+        <div class="stat-number" id="statShortlist" style="color:#22c55e;">—</div>
         <div class="stat-desc">Shortlist</div>
     </div>
     <div class="stat-card">
-        <div class="stat-number" id="statMaybe" style="background:linear-gradient(135deg,#f59e0b,#fbbf24);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">—</div>
+        <div class="stat-number" id="statMaybe" style="color:#f59e0b;">—</div>
         <div class="stat-desc">Maybe</div>
     </div>
     <div class="stat-card">
-        <div class="stat-number" id="statUnscored" style="background:linear-gradient(135deg,#64748b,#94a3b8);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">—</div>
+        <div class="stat-number" id="statUnscored" style="color:#999;">—</div>
         <div class="stat-desc">Не оценены</div>
     </div>
 </div>
@@ -30,13 +35,10 @@
     </div>
     <select class="filter-select" id="filterPrediction">
         <option value="">Все рекомендации</option>
-        <option value="shortlist">✅ Shortlist</option>
-        <option value="maybe">⚠️ Maybe</option>
-        <option value="reject">❌ Reject</option>
+        <option value="shortlist">Shortlist</option>
+        <option value="maybe">Maybe</option>
+        <option value="reject">Reject</option>
     </select>
-    <button class="btn btn-primary" id="btnScoreAll" onclick="scoreAll()">
-        🤖 Оценить всех
-    </button>
 </div>
 
 <!-- Table -->
@@ -73,7 +75,6 @@ let currentOrder = 'desc';
 let currentPage = 1;
 let searchTimeout;
 
-// Load candidates
 async function loadCandidates(page = 1) {
     const filter = document.getElementById('filterPrediction').value;
     let url = `/api/candidates/?page=${page}&sort_by=${currentSort}&order=${currentOrder}`;
@@ -89,7 +90,6 @@ async function loadCandidates(page = 1) {
     }
 }
 
-// Search
 async function searchCandidates(query) {
     if (!query.trim()) {
         loadCandidates(1);
@@ -104,7 +104,6 @@ async function searchCandidates(query) {
     }
 }
 
-// Render table
 function renderTable(candidates) {
     const tbody = document.getElementById('candidatesBody');
     if (!candidates.length) {
@@ -123,14 +122,13 @@ function renderTable(candidates) {
             <td>${c.confidence != null ? (c.confidence * 100).toFixed(0) + '%' : '—'}</td>
             <td>
                 <button class="btn btn-sm btn-secondary" onclick="event.stopPropagation(); scoreOne(${c.id})">
-                    🤖 Оценить
+                    Оценить
                 </button>
             </td>
         </tr>
     `).join('');
 }
 
-// Pagination
 function renderPagination(total, current) {
     const pageSize = 20;
     const pages = Math.ceil(total / pageSize);
@@ -147,7 +145,6 @@ function renderPagination(total, current) {
     document.getElementById('pagination').innerHTML = html;
 }
 
-// Update stats
 async function updateStats() {
     try {
         const all = await api('/api/candidates/?page_size=1000');
@@ -164,7 +161,6 @@ async function updateStats() {
     } catch (e) {}
 }
 
-// Score one candidate
 async function scoreOne(id) {
     try {
         showToast('Оцениваю кандидата...', 'info');
@@ -176,26 +172,6 @@ async function scoreOne(id) {
     }
 }
 
-// Score all
-async function scoreAll() {
-    try {
-        const btn = document.getElementById('btnScoreAll');
-        btn.disabled = true;
-        btn.textContent = '⏳ Оцениваю...';
-        showToast('Запущена оценка всех кандидатов...', 'info');
-        const result = await api('/api/candidates/score-all/', { method: 'POST' });
-        showToast(result.message, 'success');
-        loadCandidates(currentPage);
-        btn.disabled = false;
-        btn.innerHTML = '🤖 Оценить всех';
-    } catch (e) {
-        showToast(e.message, 'error');
-        document.getElementById('btnScoreAll').disabled = false;
-        document.getElementById('btnScoreAll').innerHTML = '🤖 Оценить всех';
-    }
-}
-
-// Helpers
 function predBadge(pred) {
     if (!pred) return '<span class="badge badge-pending">Не оценён</span>';
     const cls = { shortlist: 'badge-shortlist', maybe: 'badge-maybe', reject: 'badge-reject' };

@@ -21,12 +21,16 @@
                 <input type="number" id="age" required min="14" max="25" placeholder="17">
             </div>
             <div class="form-group">
-                <label for="city">Город</label>
-                <input type="text" id="city" placeholder="Алматы">
+                <label for="region">Регион *</label>
+                <select id="region" required>
+                    <option value="">Выберите регион</option>
+                </select>
             </div>
             <div class="form-group">
-                <label for="region">Регион</label>
-                <input type="text" id="region" placeholder="Алматинская область">
+                <label for="city">Город *</label>
+                <select id="city" required>
+                    <option value="">Сначала выберите регион</option>
+                </select>
             </div>
             <div class="form-group">
                 <label for="school_type">Тип школы</label>
@@ -140,7 +144,7 @@
 
     <div style="display:flex;gap:12px;justify-content:flex-end;padding-top:1rem;border-top:1px solid var(--border);">
         <a href="/" class="btn btn-secondary">Отмена</a>
-        <button type="submit" class="btn btn-primary">📤 Зарегистрировать</button>
+        <button type="submit" class="btn btn-primary">Зарегистрировать</button>
     </div>
 </form>
 {% endblock %}
@@ -149,6 +153,60 @@
 <script>
 document.getElementById('nav-register').classList.add('active');
 
+// ============ Казахстан: Регион → Города ============
+const REGIONS = {
+    "Астана": ["Астана"],
+    "Алматы": ["Алматы"],
+    "Шымкент": ["Шымкент"],
+    "Алматинская область": ["Талдыкорган", "Капшагай", "Текели", "Талгар", "Каскелен", "Есик", "Жаркент"],
+    "Акмолинская область": ["Кокшетау", "Степногорск", "Щучинск"],
+    "Актюбинская область": ["Актобе", "Хромтау", "Кандыагаш", "Алга"],
+    "Атырауская область": ["Атырау", "Кульсары"],
+    "Восточно-Казахстанская область": ["Усть-Каменогорск", "Семей", "Риддер", "Курчатов", "Зыряновск"],
+    "Жамбылская область": ["Тараз", "Шу", "Каратау"],
+    "Западно-Казахстанская область": ["Уральск", "Аксай"],
+    "Карагандинская область": ["Караганда", "Темиртау", "Жезказган", "Сатпаев", "Балхаш", "Шахтинск"],
+    "Костанайская область": ["Костанай", "Рудный", "Лисаковск", "Аркалык"],
+    "Кызылординская область": ["Кызылорда", "Байконыр"],
+    "Мангистауская область": ["Актау", "Жанаозен"],
+    "Павлодарская область": ["Павлодар", "Экибастуз", "Аксу"],
+    "Северо-Казахстанская область": ["Петропавловск"],
+    "Туркестанская область": ["Туркестан", "Кентау", "Арыс"],
+    "Абай область": ["Семей"],
+    "Жетісу область": ["Талдыкорган"],
+    "Ұлытау область": ["Жезказган"],
+};
+
+const regionSelect = document.getElementById('region');
+const citySelect = document.getElementById('city');
+
+// Populate regions
+Object.keys(REGIONS).sort().forEach(r => {
+    const opt = document.createElement('option');
+    opt.value = r;
+    opt.textContent = r;
+    regionSelect.appendChild(opt);
+});
+
+// On region change → update cities
+regionSelect.addEventListener('change', () => {
+    const region = regionSelect.value;
+    citySelect.innerHTML = '';
+    if (!region) {
+        citySelect.innerHTML = '<option value="">Сначала выберите регион</option>';
+        return;
+    }
+    const cities = REGIONS[region] || [];
+    citySelect.innerHTML = '<option value="">Выберите город</option>';
+    cities.forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = c;
+        opt.textContent = c;
+        citySelect.appendChild(opt);
+    });
+});
+
+// ============ Dynamic items ============
 let olympiadCount = 0;
 let courseCount = 0;
 let projectCount = 0;
@@ -233,11 +291,10 @@ function addProject() {
     document.getElementById('projectsContainer').insertAdjacentHTML('beforeend', html);
 }
 
-// Collect form data and submit
+// ============ Submit ============
 document.getElementById('registerForm').addEventListener('submit', async (e) => {
     e.preventDefault();
 
-    // Collect olympiads
     const olympiads = [];
     document.querySelectorAll('[id^="olympiad_"]').forEach(el => {
         const id = el.id.split('_')[1];
@@ -252,7 +309,6 @@ document.getElementById('registerForm').addEventListener('submit', async (e) => 
         }
     });
 
-    // Collect courses
     const courses = [];
     document.querySelectorAll('[id^="course_"]').forEach(el => {
         const id = el.id.split('_')[1];
@@ -266,7 +322,6 @@ document.getElementById('registerForm').addEventListener('submit', async (e) => 
         }
     });
 
-    // Collect projects
     const projects = [];
     document.querySelectorAll('[id^="project_"]').forEach(el => {
         const id = el.id.split('_')[1];

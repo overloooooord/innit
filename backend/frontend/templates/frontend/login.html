@@ -1,0 +1,67 @@
+{% extends "frontend/base.html" %}
+{% block title %}Вход — Панель InVision U{% endblock %}
+
+{% block content %}
+<div class="login-container">
+    <div class="login-card">
+        <h2>Панель управления</h2>
+        <p>Войдите для доступа к списку кандидатов и их оценкам</p>
+
+        <div class="login-error" id="loginError">Неверный логин или пароль</div>
+
+        <form id="loginForm">
+            <div class="form-group">
+                <label for="username">Логин</label>
+                <input type="text" id="username" required placeholder="Введите логин" autocomplete="username">
+            </div>
+            <div class="form-group">
+                <label for="password">Пароль</label>
+                <input type="password" id="password" required placeholder="Введите пароль" autocomplete="current-password">
+            </div>
+            <button type="submit" class="btn btn-primary">Войти</button>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.getElementById('loginForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const username = document.getElementById('username').value;
+    const password = document.getElementById('password').value;
+    const errorEl = document.getElementById('loginError');
+    errorEl.style.display = 'none';
+
+    try {
+        const resp = await fetch('/panel/login/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken'),
+            },
+            body: JSON.stringify({ username, password }),
+        });
+        const data = await resp.json();
+        if (data.success) {
+            window.location = '/panel/';
+        } else {
+            errorEl.textContent = data.error || 'Неверный логин или пароль';
+            errorEl.style.display = 'block';
+        }
+    } catch (err) {
+        errorEl.textContent = 'Ошибка сервера';
+        errorEl.style.display = 'block';
+    }
+});
+
+function getCookie(name) {
+    let value = null;
+    document.cookie.split(';').forEach(c => {
+        c = c.trim();
+        if (c.startsWith(name + '=')) value = c.substring(name.length + 1);
+    });
+    return value;
+}
+</script>
+{% endblock %}
