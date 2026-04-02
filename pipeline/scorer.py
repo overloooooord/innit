@@ -3,69 +3,56 @@ import os
 import numpy as np
 from typing import Dict, Any
 
-from config import LABEL_NAMES, MODEL_PATH
+from config import LABEL_NAMES, MODEL_PATH, FEATURE_DESCRIPTIONS
 from feature_extractor import extract_features, extract_features_dict
 from trainer import load_model
-from explainer import CandidateExplainer, FEATURE_DESCRIPTIONS
+from explainer import CandidateExplainer
 
 
 class CandidateScorer:
     def __init__(self, model_path: str = None, X_background: np.ndarray = None):
-        self.model = load_model(model_path or MODEL_PATH)
+        self.model     = load_model(model_path or MODEL_PATH)
         self.explainer = CandidateExplainer(self.model, X_background)
 
     def score(self, candidate: Dict[str, Any]) -> Dict[str, Any]:
-        candidate_id = candidate.get("id", "unknown")
-
-        # 1. Extract features
         feature_vector = extract_features(candidate)
-        feature_dict = extract_features_dict(candidate)
+        feature_dict   = extract_features_dict(candidate)
 
-        # 2. Predict
-        X = feature_vector.reshape(1, -1)
+        X             = feature_vector.reshape(1, -1)
         probabilities = self.model.predict_proba(X)[0]
-        predicted_class = int(np.argmax(probabilities))
-        confidence = float(probabilities[predicted_class])
+        predicted_cls = int(np.argmax(probabilities))
+        confidence    = float(probabilities[predicted_cls])
 
-        # 3. Explain
-        explanation = self.explainer.explain(feature_vector, predicted_class)
+        explanation = self.explainer.explain(feature_vector, predicted_cls)
+        radar       = self._build_radar(candidate)
+        flags       = self._build_flags(feature_dict)
+        trajectory  = self._build_trajectory(candidate)
 
-        # 4. Build radar chart data
-        radar = self._build_radar(feature_dict)
-
-        # 5. Build flags
-        flags = self._build_flags(feature_dict)
-
-        # 6. Build trajectory summary
-        trajectory = self._build_trajectory(candidate)
-
-        result = {
-            "candidate_id": candidate_id,
-            "prediction": LABEL_NAMES[predicted_class],
-            "confidence": confidence,
-            "probabilities": {
-                LABEL_NAMES[i]: float(probabilities[i]) for i in range(3)
-            },
+        return {
+            "candidate_id": candidate.get("id", "unknown"),
+            "prediction":   LABEL_NAMES[predicted_cls],
+            "confidence":   confidence,
+            "probabilities": {LABEL_NAMES[i]: float(probabilities[i]) for i in range(3)},
             "explanation": {
                 "top_positive_factors": [
                     {
                         "description": f["description"],
-                        "value": f["feature_value"],
-                        "impact": round(f["shap_value"], 4),
+                        "value":       f["feature_value"],
+                        "impact":      round(f["shap_value"], 4),
                     }
                     for f in explanation["top_positive_factors"]
                 ],
                 "top_negative_factors": [
                     {
                         "description": f["description"],
-                        "value": f["feature_value"],
-                        "impact": round(f["shap_value"], 4),
+                        "value":       f["feature_value"],
+                        "impact":      round(f["shap_value"], 4),
                     }
                     for f in explanation["top_negative_factors"]
                 ],
             },
-            "radar": radar,
-            "flags": flags,
+            "radar":      radar,
+            "flags":      flags,
             "trajectory": trajectory,
             "feature_values": {
                 FEATURE_DESCRIPTIONS.get(k, k): round(v, 4)
@@ -73,169 +60,129 @@ class CandidateScorer:
             },
         }
 
-        return result
-
     def score_batch(self, candidates: list) -> list:
-        """Score multiple candidates at once."""
         return [self.score(c) for c in candidates]
 
     def rank(self, candidates: list) -> list:
         scored = self.score_batch(candidates)
-
-        # Sort by shortlist probability descending
         scored.sort(key=lambda x: x["probabilities"]["shortlist"], reverse=True)
-
-        # Add rank
         for i, s in enumerate(scored):
-            s["rank"] = i + 1
+            s["rank"]             = i + 1
             s["total_candidates"] = len(scored)
-
         return scored
 
+    # ── Radar: 5 Cornell SLPI dimensions ─────────────────────────
 
-    def _build_radar(self, features: Dict[str, float]) -> Dict[str, int]:
-        radar = {}
-
-        # Initiative (1-5): based on founder_ratio and solo projects
-        initiative = features["f_founder_ratio"] * 3 + min(features["f_solo_project_count"], 2)
-        radar["Инициативность"] = self._to_scale(initiative, 0, 5)
-
-        # Resilience (1-5): persistence + olympiad retries
-        resilience = (
-            features["f_persistence_signal"] * 3
-            + min(features["f_activity_years_span"], 2)
-        )
-        radar["Устойчивость"] = self._to_scale(resilience, 0, 5)
-
-        # Academic (1-5): GPA + olympiads
-        academic = (
-            (features["f_gpa"] - 2.0) / 3.0 * 3  # 2.0-5.0 → 0-3
-            + features["f_olympiad_has_prize"] * 2
-        )
-        radar["Академические"] = self._to_scale(academic, 0, 5)
-
-        # Leadership (1-5): team size + role progression + social projects
-        leadership = (
-            min(features["f_max_team_size"] / 10, 2)
-            + features["f_role_progression"] + 1  # shift from [-1,2] to [0,3]
-            + features["f_has_social_project"]
-        )
-        radar["Лидерство"] = self._to_scale(leadership, 0, 5)
-
-        # Diversity (1-5): project diversity + skill growth
-        diversity = (
-            features["f_project_diversity"]
-            + features["f_skill_diversity_growth"]
-        )
-        radar["Разнообразие"] = self._to_scale(diversity, 0, 6)
-
-        return radar
-
-    @staticmethod
-    def _to_scale(value: float, min_val: float, max_val: float) -> int:
-        """Convert a raw value to 1-5 scale."""
-        if max_val == min_val:
-            return 3
-        normalized = (value - min_val) / (max_val - min_val)
-        return int(np.clip(round(normalized * 4) + 1, 1, 5))
-
-    # ============================================================
-    # Flags builder
-    # ============================================================
-
-    def _build_flags(self, features: Dict[str, float]) -> Dict[str, Dict[str, Any]]:
+    def _build_radar(self, candidate: Dict[str, Any]) -> Dict[str, Any]:
         """
-        Generate warning/info flags for the commission.
-        """
-        flags = {}
+        5 SLPI dimensions (Cornell Student Leadership Practices Inventory).
+        Source: https://scl.cornell.edu/coe/ctlc/programs/leadership-assessments/slpi
 
-        # Coherence flag (placeholder — will be filled by NLP module later)
-        flags["coherence"] = {
-            "status": "pending",
-            "label": "Когерентность профиля",
-            "detail": "Будет рассчитано NLP-модулем",
+        Values come from bot_metadata.fingerprint_display — computed by
+        scenario_engine.py from the candidate's choice path across 4 branching
+        scenarios (20-second timer each).
+
+        If fingerprint_reliable == False or scenario_engine not yet deployed,
+        all values are None (pending).
+
+          model_the_way      — Setting an example by demonstrating personal values and beliefs
+          inspire_vision     — Creating a compelling vision and enlisting others in it
+          challenge_process  — Seeking out new and innovative ways of doing things
+          enable_others      — Fostering collaboration and empowering others to contribute
+          encourage_heart    — Recognising and celebrating the contributions of others
+        """
+        meta     = candidate.get("bot_metadata", {})
+        reliable = meta.get("fingerprint_reliable", False)
+        display  = meta.get("fingerprint_display", {})
+
+        if not reliable or not display:
+            return {
+                "model_the_way":     None,
+                "inspire_vision":    None,
+                "challenge_process": None,
+                "enable_others":     None,
+                "encourage_heart":   None,
+                "status":            "pending — scenario_engine.py not yet deployed",
+            }
+
+        return {
+            "model_the_way":     display.get("model_the_way"),
+            "inspire_vision":    display.get("inspire_vision"),
+            "challenge_process": display.get("challenge_process"),
+            "enable_others":     display.get("enable_others"),
+            "encourage_heart":   display.get("encourage_heart"),
+            "status":            "ok",
         }
 
-        # AI detection flag (placeholder)
-        flags["ai_detection"] = {
-            "status": "pending",
-            "label": "AI-детекция эссе",
-            "detail": "Будет рассчитано AI-детектором",
+    # ── Flags ─────────────────────────────────────────────────────
+
+    def _build_flags(self, f: Dict[str, float]) -> Dict[str, Any]:
+        """
+        Commission flags.
+        ai_detection and coherence — placeholders for NLP module.
+        These are shown to commission in the card, never enter the scoring model.
+        """
+        flags: Dict[str, Any] = {
+            "coherence": {
+                "status": "pending",
+                "label":  "Когерентность профиля",
+                "detail": "Будет рассчитано NLP-модулем",
+            },
+            "ai_detection": {
+                "status": "pending",
+                "label":  "AI-детекция эссе",
+                "detail": "Будет рассчитано AI-детектором",
+            },
         }
 
-        # No projects flag
-        if features["f_project_count"] == 0:
+        if f["f_project_count"] == 0:
             flags["no_projects"] = {
                 "status": "warning",
-                "label": "Нет проектов",
+                "label":  "Нет проектов",
                 "detail": "Кандидат не указал ни одного проекта",
             }
 
-        # Low initiative flag
-        if features["f_founder_ratio"] == 0 and features["f_project_count"] > 0:
+        if f["f_founder_ratio"] == 0 and f["f_project_count"] > 0:
             flags["low_initiative"] = {
                 "status": "info",
-                "label": "Низкая инициативность",
+                "label":  "Низкая инициативность",
                 "detail": "Участвовал в проектах, но не основал ни одного",
             }
 
-        # Stale activity flag
-        if features["f_activity_recency"] >= 2:
-            flags["stale_activity"] = {
-                "status": "warning",
-                "label": "Давняя активность",
-                "detail": f"Последняя активность {int(features['f_activity_recency'])} лет назад",
-            }
-
-        # Strong trajectory flag
-        if features["f_role_progression"] > 1 and features["f_skill_diversity_growth"] >= 3:
+        if f["f_role_progression"] > 1 and f["f_skill_diversity_growth"] >= 3:
             flags["strong_trajectory"] = {
                 "status": "positive",
-                "label": "Сильная траектория роста",
+                "label":  "Сильная траектория роста",
                 "detail": "Выраженный рост ролей и навыков",
             }
 
         return flags
 
-    # ============================================================
-    # Trajectory builder
-    # ============================================================
+    # ── Trajectory timeline ───────────────────────────────────────
 
     def _build_trajectory(self, candidate: Dict[str, Any]) -> list:
-        """
-        Build chronological trajectory for timeline visualization.
-        """
         events = []
-
-        # Projects
         for p in candidate.get("experience", {}).get("projects", []):
             events.append({
-                "year": p.get("year", 0),
-                "type": "project",
-                "title": p.get("name", "Без названия"),
-                "role": p.get("role", "participant"),
+                "year":     p.get("year", 0),
+                "type":     "project",
+                "title":    p.get("name", "Без названия"),
+                "role":     p.get("role", "participant"),
                 "category": p.get("type", "other"),
             })
-
-        # Olympiads
         for o in candidate.get("education", {}).get("olympiads", []):
             events.append({
-                "year": o.get("year", 0),
-                "type": "olympiad",
+                "year":  o.get("year", 0),
+                "type":  "olympiad",
                 "title": f"Олимпиада: {o.get('subject', '?')}",
                 "level": o.get("level", "?"),
-                "result": o.get("result", "participant"),
+                "prize": o.get("prize", False),
             })
-
-        # Sort chronologically
         events.sort(key=lambda e: e["year"])
-
         return events
 
 
-# ============================================================
-# CLI
-# ============================================================
+# ── CLI ──────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
     import sys
@@ -244,53 +191,40 @@ if __name__ == "__main__":
         print("Usage: python scorer.py <candidate.json> [model.pkl]")
         sys.exit(1)
 
-    candidate_path = sys.argv[1]
-    model_path = sys.argv[2] if len(sys.argv) > 2 else None
-
-    with open(candidate_path, "r", encoding="utf-8") as f:
+    with open(sys.argv[1], "r", encoding="utf-8") as f:
         candidate = json.load(f)
 
+    model_path = sys.argv[2] if len(sys.argv) > 2 else None
     scorer = CandidateScorer(model_path)
     result = scorer.score(candidate)
 
-    print("\n" + "=" * 60)
+    print(f"\n{'=' * 60}")
     print(f"CANDIDATE: {candidate.get('personal', {}).get('name', 'Unknown')}")
-    print(f"ID: {result['candidate_id']}")
-    print("=" * 60)
-
-    print(f"\nPrediction:  {result['prediction'].upper()}")
-    print(f"Confidence:  {result['confidence']:.1%}")
-    print(f"Probabilities:")
+    print(f"{'=' * 60}")
+    print(f"\nПредсказание: {result['prediction'].upper()}")
+    print(f"Уверенность:  {result['confidence']:.1%}")
+    print("\nВероятности:")
     for label, prob in result["probabilities"].items():
         bar = "█" * int(prob * 30)
         print(f"  {label:12s} {bar} {prob:.1%}")
-
-    print(f"\n--- Сильные стороны ---")
+    print("\n✅ Сильные стороны:")
     for f in result["explanation"]["top_positive_factors"]:
-        print(f"  ✅ {f['description']} (вклад: +{f['impact']:.4f})")
-
-    print(f"\n--- Слабые стороны ---")
+        print(f"   {f['description']} (+{f['impact']:.4f})")
+    print("\n⚠️  Слабые стороны:")
     for f in result["explanation"]["top_negative_factors"]:
-        print(f"  ⚠️  {f['description']} (вклад: {f['impact']:.4f})")
+        print(f"   {f['description']} ({f['impact']:.4f})")
+    print("\nLeadership Fingerprint (SLPI):")
+    radar = result["radar"]
+    print(f"  Status: {radar.get('status')}")
+    for dim in ("model_the_way", "inspire_vision", "challenge_process", "enable_others", "encourage_heart"):
+        val = radar.get(dim)
+        if val is not None:
+            print(f"  {dim:25s} {'█' * int(val * 20)} {val:.2f}")
+        else:
+            print(f"  {dim:25s} pending")
 
-    print(f"\n--- Radar ---")
-    for dim, val in result["radar"].items():
-        print(f"  {dim:20s} {'★' * val}{'☆' * (5 - val)}")
-
-    print(f"\n--- Flags ---")
-    for key, flag in result["flags"].items():
-        icon = {"positive": "🟢", "warning": "🟡", "info": "🔵", "pending": "⏳"}.get(
-            flag["status"], "❓"
-        )
-        print(f"  {icon} {flag['label']}: {flag['detail']}")
-
-    print(f"\n--- Trajectory ---")
-    for event in result["trajectory"]:
-        print(f"  {event['year']} | {event['title']} ({event.get('role', event.get('result', ''))})")
-
-    # Save full result
     output_path = f"outputs/score_{result['candidate_id']}.json"
     os.makedirs("outputs", exist_ok=True)
     with open(output_path, "w", encoding="utf-8") as f:
         json.dump(result, f, indent=2, ensure_ascii=False)
-    print(f"\nFull result saved to {output_path}")
+    print(f"\nFull result → {output_path}")
