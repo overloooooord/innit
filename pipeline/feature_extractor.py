@@ -1,16 +1,3 @@
-"""
-IMPORTANT: Personal/demographic fields (city, school_type, has_mentor,
-nomination_pre_score) and bot_metadata fields are intentionally NOT extracted
-as features. They are used only in fairness_audit.py for bias detection.
-
-Feature vector layout (used by single-stage CandidateScorer):
-  dims   0–17  → 18 structural features (education, experience, trajectory)
-  dims  18–22  → 5 SLPI clusters from bot_metadata.fingerprint_display
-
-ThreeStageScorer uses the three extract_*_features() functions directly
-so each XGBoost stage receives only its own slice.
-"""
-
 import numpy as np
 from typing import Dict, List, Any
 

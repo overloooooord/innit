@@ -1,10 +1,3 @@
-"""
-InVision U ML Pipeline — Trainer
-==================================
-Trains XGBoost classifier on labeled candidate data.
-Supports cross-validation, baseline comparison, and model persistence.
-"""
-
 import json
 import os
 import pickle
