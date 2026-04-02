@@ -241,12 +241,54 @@ def train(dataset_path: str, test_size: float = 0.2) -> dict:
     }
 
 
+def train_two_stage(dataset_path: str, test_size: float = 0.2) -> dict:
+    """
+    Train the ThreeStageScorer (structural + fingerprint + essay).
+    Imported here lazily to avoid circular imports.
+    """
+    from scorer import ThreeStageScorer
+
+    print("=" * 60)
+    print("InVision U — Two-Stage Model Training")
+    print("=" * 60)
+
+    _, y, raw_candidates = load_dataset(dataset_path)
+
+    indices = np.arange(len(raw_candidates))
+    train_idx, test_idx = train_test_split(
+        indices, test_size=test_size, stratify=y, random_state=42
+    )
+
+    train_candidates = [raw_candidates[i] for i in train_idx]
+    test_candidates  = [raw_candidates[i] for i in test_idx]
+    y_train = y[train_idx]
+    y_test  = y[test_idx]
+
+    print(f"\nTrain: {len(y_train)} | Test: {len(y_test)}")
+
+    scorer = ThreeStageScorer()
+    scorer.fit(train_candidates, y_train)
+    scorer.save()
+
+    return {
+        "scorer":           scorer,
+        "train_candidates": train_candidates,
+        "test_candidates":  test_candidates,
+        "y_train":          y_train,
+        "y_test":           y_test,
+    }
+
+
 if __name__ == "__main__":
     import sys
 
     dataset_path = sys.argv[1] if len(sys.argv) > 1 else "../data/synthetic_dataset.json"
-    results = train(dataset_path)
 
-    print("\n✓ Training complete.")
-    print(f"  Model: {MODEL_PATH}")
-    print(f"  Test set size: {len(results['y_test'])}")
+    if "--two-stage" in sys.argv:
+        results = train_two_stage(dataset_path)
+        print("\n✓ Two-stage training complete.")
+    else:
+        results = train(dataset_path)
+        print("\n✓ Training complete.")
+        print(f"  Model: {MODEL_PATH}")
+        print(f"  Test set size: {len(results['y_test'])}")
