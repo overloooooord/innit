@@ -138,48 +138,50 @@ const MBTI_QUESTIONS = [
 
 
 // ─── Языковой тест — 20 вопросов ─────────────────────────────────────────────
-// Каждый вопрос: text, 4 варианта (A/B/C/D), correct — правильный ответ
-const LANG_QUESTIONS = [
+// Каждый вопрос: text, 4 варианта (A/B/C/D)
+// ПРАВИЛЬНЫЕ ОТВЕТЫ ХРАНЯТСЯ НА СЕРВЕРЕ (backend/candidates/language_questions.py)
+// Эти вопросы — fallback, если бэкенд недоступен. При загрузке заменяются версией с сервера.
+let LANG_QUESTIONS = [
   { key: 'q1',  text: 'Choose the correct sentence:',
-    options: ['She go to school every day.', 'She goes to school every day.', 'She going to school every day.', 'She are go to school every day.'], correct: 'B' },
+    options: ['She go to school every day.', 'She goes to school every day.', 'She going to school every day.', 'She are go to school every day.'] },
   { key: 'q2',  text: 'What is the past tense of "buy"?',
-    options: ['buyed', 'bought', 'buied', 'boughted'], correct: 'B' },
+    options: ['buyed', 'bought', 'buied', 'boughted'] },
   { key: 'q3',  text: '"I ___ to the cinema yesterday."',
-    options: ['go', 'goes', 'went', 'gone'], correct: 'C' },
+    options: ['go', 'goes', 'went', 'gone'] },
   { key: 'q4',  text: 'Choose the synonym for "happy":',
-    options: ['sad', 'joyful', 'angry', 'tired'], correct: 'B' },
+    options: ['sad', 'joyful', 'angry', 'tired'] },
   { key: 'q5',  text: '"She has been studying ___ 3 hours."',
-    options: ['since', 'for', 'during', 'while'], correct: 'B' },
+    options: ['since', 'for', 'during', 'while'] },
   { key: 'q6',  text: 'Which sentence is correct?',
-    options: ['I have went there.', 'I have gone there.', 'I has gone there.', 'I have go there.'], correct: 'B' },
+    options: ['I have went there.', 'I have gone there.', 'I has gone there.', 'I have go there.'] },
   { key: 'q7',  text: '"If I ___ rich, I would travel the world."',
-    options: ['am', 'was', 'were', 'be'], correct: 'C' },
+    options: ['am', 'was', 'were', 'be'] },
   { key: 'q8',  text: 'Choose the antonym of "ancient":',
-    options: ['old', 'modern', 'historic', 'traditional'], correct: 'B' },
+    options: ['old', 'modern', 'historic', 'traditional'] },
   { key: 'q9',  text: '"By the time she arrived, the movie ___."',
-    options: ['started', 'has started', 'had started', 'was starting'], correct: 'C' },
+    options: ['started', 'has started', 'had started', 'was starting'] },
   { key: 'q10', text: '"I wish I ___ more time to study."',
-    options: ['have', 'has', 'had', 'having'], correct: 'C' },
+    options: ['have', 'has', 'had', 'having'] },
   { key: 'q11', text: 'Choose the correct word: "He speaks English ___."',
-    options: ['fluent', 'fluently', 'fluence', 'fluid'], correct: 'B' },
+    options: ['fluent', 'fluently', 'fluence', 'fluid'] },
   { key: 'q12', text: '"The book ___ by many students."',
-    options: ['is reading', 'is read', 'are read', 'reads'], correct: 'B' },
+    options: ['is reading', 'is read', 'are read', 'reads'] },
   { key: 'q13', text: '"She asked me where I ___."',
-    options: ['live', 'lived', 'living', 'lives'], correct: 'B' },
+    options: ['live', 'lived', 'living', 'lives'] },
   { key: 'q14', text: 'Choose the correct form: "___ you ever been to London?"',
-    options: ['Do', 'Did', 'Have', 'Are'], correct: 'C' },
+    options: ['Do', 'Did', 'Have', 'Are'] },
   { key: 'q15', text: '"I\'m looking forward ___ you again."',
-    options: ['to see', 'to seeing', 'seeing', 'see'], correct: 'B' },
+    options: ['to see', 'to seeing', 'seeing', 'see'] },
   { key: 'q16', text: '"He ___ have left already; the office is empty."',
-    options: ['must', 'can', 'should', 'would'], correct: 'A' },
+    options: ['must', 'can', 'should', 'would'] },
   { key: 'q17', text: '"Despite ___ tired, she continued working."',
-    options: ['be', 'being', 'been', 'was'], correct: 'B' },
+    options: ['be', 'being', 'been', 'was'] },
   { key: 'q18', text: '"The more you practice, the ___ you get."',
-    options: ['good', 'better', 'best', 'well'], correct: 'B' },
+    options: ['good', 'better', 'best', 'well'] },
   { key: 'q19', text: '"I\'d rather you ___ to the meeting tomorrow."',
-    options: ['come', 'came', 'coming', 'will come'], correct: 'B' },
+    options: ['come', 'came', 'coming', 'will come'] },
   { key: 'q20', text: '"Not until the rain stopped ___ go outside."',
-    options: ['we could', 'could we', 'we can', 'can we'], correct: 'B' },
+    options: ['we could', 'could we', 'we can', 'can we'] },
 ];
 
 
@@ -742,17 +744,8 @@ function stopTabDetection() {
 }
 
 
-// --- 5.3: Подсчёт и отправка ---
-
-function calculateLangScore() {
-  let score = 0;
-  LANG_QUESTIONS.forEach(q => {
-    if (state.langAnswers[q.key] === q.correct) {
-      score++;
-    }
-  });
-  return score;
-}
+// --- 5.3: Отправка ---
+// Score считается НА СЕРВЕРЕ — пользователь не может подменить балл
 
 async function submitLangTest() {
   // Останавливаем таймер и детекцию вкладки
@@ -760,14 +753,12 @@ async function submitLangTest() {
   stopTabDetection();
 
   const timeSpent = Math.round((new Date() - state.langStartTime) / 1000);
-  const score = calculateLangScore();
 
+  // Отправляем только ответы — score считает сервер
   const payload = {
     application_id:     state.applicationId,
     language:           'Английский',
     answers:            state.langAnswers,
-    score:              score,
-    max_score:          LANG_QUESTIONS.length,
     time_spent_seconds: timeSpent,
     violation_count:    state.violations,
   };
@@ -869,7 +860,30 @@ function initLogin() {
 
 
 // ═══════════════════════════════════════════════════
-// 8. ИНИЦИАЛИЗАЦИЯ — запуск всего
+// 8. ЗАГРУЗКА ВОПРОСОВ С СЕРВЕРА
+// ═══════════════════════════════════════════════════
+
+async function loadLanguageQuestions() {
+  /*
+   * Загружаем вопросы языкового теста с бэкенда.
+   * Сервер отдаёт вопросы БЕЗ правильных ответов —
+   * пользователь не может подсмотреть в DevTools.
+   * Если бэкенд недоступен — используем встроенные вопросы (fallback).
+   */
+  try {
+    const data = await API.getLanguageQuestions();
+    if (data.questions && data.questions.length > 0) {
+      LANG_QUESTIONS = data.questions;
+      console.log(`Загружено ${data.questions.length} вопросов языкового теста с сервера`);
+    }
+  } catch (e) {
+    console.warn('Не удалось загрузить вопросы с сервера, используем встроенные');
+  }
+}
+
+
+// ═══════════════════════════════════════════════════
+// 9. ИНИЦИАЛИЗАЦИЯ — запуск всего
 // ═══════════════════════════════════════════════════
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -881,5 +895,6 @@ document.addEventListener('DOMContentLoaded', () => {
   initMBTINav();
   initLangNav();
   loadCities();
+  loadLanguageQuestions();  // Загружаем вопросы с сервера
   showScreen('landing');
 });

@@ -51,6 +51,7 @@ from .kz_regions import (
     get_all_cities, get_regions_for_city, get_all_regions,
     LANGUAGES_CHOICES,
 )
+from .language_questions import get_questions_for_client, calculate_score
 
 
 # Логгеры
@@ -230,6 +231,22 @@ def mbti_test_submit(request):
     )
 
 
+@api_view(['GET'])
+def language_questions_list(request):
+    """
+    GET /api/tests/language/questions/ — получить вопросы языкового теста.
+
+    Возвращает вопросы БЕЗ правильных ответов (correct).
+    Фронт использует это чтобы показать вопросы пользователю.
+    Правильные ответы остаются только на сервере.
+    """
+    return Response({
+        'questions': get_questions_for_client(),
+        'total': len(get_questions_for_client()),
+        'time_limit_seconds': 600,
+    })
+
+
 @api_view(['POST'])
 def language_test_submit(request):
     """
@@ -239,17 +256,25 @@ def language_test_submit(request):
     {
         "application_id": 1,
         "language": "Английский",
-        "answers": {"q1": "B", "q2": "A"},
-        "score": 15,
-        "max_score": 20,
+        "answers": {"q1": "B", "q2": "A", ...},
         "time_spent_seconds": 540,
         "violation_count": 2
     }
 
+    score и max_score рассчитываются СЕРВЕРОМ — фронт не может подменить.
     violation_count — количество раз когда пользователь
     ушёл из вкладки (document.visibilitychange event).
     """
-    serializer = LanguageTestSerializer(data=request.data)
+    # Считаем score на сервере из ответов
+    answers = request.data.get('answers', {})
+    score_result = calculate_score(answers)
+
+    # Подставляем серверный score в данные
+    mutable_data = request.data.copy()
+    mutable_data['score'] = score_result['score']
+    mutable_data['max_score'] = score_result['max_score']
+
+    serializer = LanguageTestSerializer(data=mutable_data)
     serializer.is_valid(raise_exception=True)
     result = serializer.save()
 
@@ -384,6 +409,58 @@ def admin_applications(request):
     page = paginator.paginate_queryset(queryset, request)
     serializer = ApplicationSerializer(page, many=True)
     return paginator.get_paginated_response(serializer.data)
+
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# ОЦЕНКА ЗАЯВКИ — мост Application → ML pipeline
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+@api_view(['POST'])
+def application_score(request, pk):
+    """
+    POST /api/applications/<id>/score/ — прогнать заявку через ML pipeline.
+
+    Что происходит:
+      1. Берём Application из БД
+      2. Конвертируем в формат candidate_scheme.json через to_pipeline_dict()
+      3. Отправляем в scorer.py → получаем prediction + explanation
+      4. Возвращаем результат
+
+    Для работы нужна обученная модель в pipeline/models/model.pkl.
+    Если модели нет → вернёт 503 с инструкцией как обучить.
+    """
+    try:
+        application = Application.objects.prefetch_related(
+            'mbti_result', 'language_tests'
+        ).get(pk=pk)
+    except Application.DoesNotExist:
+        return Response(
+            {'error': f'Заявка #{pk} не найдена'},
+            status=status.HTTP_404_NOT_FOUND,
+        )
+
+    try:
+        candidate_dict = application.to_pipeline_dict()
+        result = score_candidate(candidate_dict)
+
+        app_logger.info(
+            f"ML оценка заявки #{pk} ({application.name}): "
+            f"{result['prediction']} ({result['confidence']:.0%})"
+        )
+
+        return Response(result)
+
+    except FileNotFoundError as e:
+        return Response(
+            {'error': str(e)},
+            status=status.HTTP_503_SERVICE_UNAVAILABLE,
+        )
+    except Exception as e:
+        logger.error(f"Ошибка ML оценки заявки #{pk}: {e}")
+        return Response(
+            {'error': f'Ошибка скоринга: {str(e)}'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
 
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

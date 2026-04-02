@@ -178,6 +178,73 @@ class Application(models.Model):
     def __str__(self):
         return f"#{self.pk} {self.name} — {self.city}"
 
+    def to_pipeline_dict(self):
+        """
+        Конвертирует Application в формат candidate_scheme.json
+        для прогона через pipeline/scorer.py.
+
+        Что делает:
+          1. Собирает personal данные из полей модели
+          2. Добавляет образование (заглушка — GPA нет в форме)
+          3. Добавляет эссе и мотивацию
+          4. Если есть MBTI результат — добавляет self_assessment
+          5. Если есть языковой тест — добавляет метаданные
+
+        Возвращает dict совместимый с scorer.py.
+        """
+        data = {
+            'id': str(self.pk),
+            'personal': {
+                'name': self.name,
+                'age': 0,             # нет в текущей форме
+                'city': self.city,
+                'region': self.region,
+                'school_type': 'other',
+                'has_mentor': False,
+                'languages': self.languages or [],
+            },
+            'education': {
+                'gpa': 0.0,           # нет в текущей форме
+                'olympiads': [],
+                'courses': [],
+            },
+            'experience': {
+                'projects': [],
+            },
+            'essay': {
+                'topic': 'Эссе кандидата',
+                'text': self.essay or '',
+                'word_count': len((self.essay or '').split()),
+            },
+            'motivation': {
+                'text': self.motivation_letter or '',
+            },
+            'self_assessment': {},
+            'bot_metadata': {},
+        }
+
+        # Добавляем MBTI как self_assessment если есть
+        try:
+            mbti = self.mbti_result
+            data['self_assessment'] = {
+                'mbti_type': mbti.result_type,
+                'mbti_answers': mbti.answers,
+            }
+        except Exception:
+            pass
+
+        # Добавляем данные языкового теста в bot_metadata
+        lang_tests = self.language_tests.all()
+        if lang_tests.exists():
+            best = lang_tests.order_by('-score').first()
+            data['bot_metadata'] = {
+                'session_duration_sec': best.time_spent_seconds,
+                'essay_typing_duration_sec': 0,
+                'pauses': [],
+            }
+
+        return data
+
 
 class MBTITestResult(models.Model):
     """
@@ -276,3 +343,68 @@ class LanguageTestResult(models.Model):
     def __str__(self):
         violations = f" ⚠{self.violation_count}" if self.violation_count else ""
         return f"{self.application.name} — {self.language}: {self.score}/{self.max_score}{violations}"
+
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# КАБИНЕТ УЧИТЕЛЯ (Пользователи-Учителя, Ученики, Предложения)
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+class Teacher(models.Model):
+    """
+    Модель Учителя для входа в отдельный кабинет.
+    """
+    username = models.CharField('Логин', max_length=150, unique=True)
+    password_hash = models.CharField('Хэш пароля', max_length=255)
+    name = models.CharField('Имя преподавателя', max_length=200)
+    created_at = models.DateTimeField('Дата создания', auto_now_add=True)
+
+    class Meta:
+        verbose_name = 'Учитель'
+        verbose_name_plural = 'Учителя'
+
+    def __str__(self):
+        return f"{self.name} ({self.username})"
+
+
+class Student(models.Model):
+    """
+    Ученик, добавленный учителем.
+    """
+    teacher = models.ForeignKey(
+        Teacher,
+        on_delete=models.CASCADE,
+        related_name='students',
+        verbose_name='Учитель'
+    )
+    name = models.CharField('ФИО Ученика', max_length=200)
+    date_added = models.DateTimeField('Дата добавления', auto_now_add=True)
+    
+    class Meta:
+        verbose_name = 'Ученик учителя'
+        verbose_name_plural = 'Ученики учителей'
+
+    def __str__(self):
+        return f"{self.name} (От: {self.teacher.name})"
+
+
+class TeacherProposal(models.Model):
+    """
+    Предложение (сообщение/оффер) от администратора для учителя.
+    """
+    teacher = models.ForeignKey(
+        Teacher,
+        on_delete=models.CASCADE,
+        related_name='proposals',
+        verbose_name='Учитель'
+    )
+    title = models.CharField('Заголовок предложения', max_length=255)
+    message = models.TextField('Текст предложения')
+    created_at = models.DateTimeField('Дата создания', auto_now_add=True)
+
+    class Meta:
+        verbose_name = 'Предложение для учителя'
+        verbose_name_plural = 'Предложения для учителей'
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.title} (Для: {self.teacher.name})"

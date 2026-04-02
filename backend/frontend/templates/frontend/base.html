@@ -1,6 +1,6 @@
 {% load static %}
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="ru" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -14,10 +14,20 @@
             <div class="logo">iU</div>
             InVision U
         </a>
-        <div class="navbar-links">
+        <div class="navbar-links" style="display:flex; align-items:center; gap:15px;">
             <a href="/" id="nav-candidates">Кандидаты</a>
             <a href="/register/" id="nav-register">Регистрация</a>
             <a href="/panel/" id="nav-panel">Панель</a>
+            
+            <!-- Language and Theme Switches -->
+            <div class="lang-switch" style="display:flex; gap:5px; margin-left:20px;">
+                <button class="lang-btn active" data-lang="ru" style="background:var(--bg-hover); color:var(--text); border:1px solid var(--border); padding:4px 8px; border-radius:4px; cursor:pointer;">RU</button>
+                <button class="lang-btn" data-lang="kz" style="background:transparent; color:var(--text-secondary); border:1px solid transparent; padding:4px 8px; border-radius:4px; cursor:pointer;">ҚЗ</button>
+                <button class="lang-btn" data-lang="en" style="background:transparent; color:var(--text-secondary); border:1px solid transparent; padding:4px 8px; border-radius:4px; cursor:pointer;">EN</button>
+            </div>
+            <button class="theme-btn" id="theme-toggle" style="background:transparent; border:none; font-size:1.2rem; cursor:pointer; padding:4px;">
+                <span id="theme-icon">🌙</span>
+            </button>
         </div>
     </nav>
 
@@ -48,6 +58,37 @@
             }
             return resp.json();
         }
+
+        // Theme and Language logic for Panel
+        const savedTheme = localStorage.getItem('theme') || 'dark';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+        document.getElementById('theme-icon').textContent = savedTheme === 'dark' ? '🌙' : '☀️';
+
+        document.getElementById('theme-toggle').addEventListener('click', () => {
+            const current = document.documentElement.getAttribute('data-theme');
+            const next = current === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', next);
+            localStorage.setItem('theme', next);
+            document.getElementById('theme-icon').textContent = next === 'dark' ? '🌙' : '☀️';
+        });
+
+        // Simple language button toggle (visual)
+        document.querySelectorAll('.lang-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                document.querySelectorAll('.lang-btn').forEach(b => {
+                    b.classList.remove('active');
+                    b.style.background = 'transparent';
+                    b.style.color = 'var(--text-secondary)';
+                    b.style.borderColor = 'transparent';
+                });
+                const target = e.target;
+                target.classList.add('active');
+                target.style.background = 'var(--bg-hover)';
+                target.style.color = 'var(--text)';
+                target.style.borderColor = 'var(--border)';
+                showToast(`Язык изменен на ${target.dataset.lang.toUpperCase()}`, 'info');
+            });
+        });
     </script>
 
     {% block scripts %}{% endblock %}

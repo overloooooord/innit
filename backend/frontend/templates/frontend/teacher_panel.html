@@ -1,0 +1,136 @@
+{% extends "frontend/base.html" %}
+{% block title %}Кабинет Учителя — InVision U{% endblock %}
+
+{% block content %}
+<div class="panel-header">
+    <div>
+        <h1>Кабинет учителя: {{ teacher.name }}</h1>
+        <p style="color:var(--text-secondary);font-size:0.9rem;">Ваши ученики и предложения от администраторов</p>
+    </div>
+    <div class="panel-actions">
+        <a href="{% url 'teacher-logout' %}" class="btn btn-secondary">Выйти</a>
+    </div>
+</div>
+
+<div class="stats-bar">
+    <div class="stat-card">
+        <div class="stat-number">{{ students.count }}</div>
+        <div class="stat-desc">Всего учеников</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-number">{{ proposals.count }}</div>
+        <div class="stat-desc">Всего предложений</div>
+    </div>
+</div>
+
+<!-- Предложения (Offers/Messages) от Админа -->
+<div class="container" style="margin-top:2rem;">
+    <h2>Предложения и Офферы</h2>
+    <div style="display:flex; flex-direction:column; gap:1rem; margin-top:1rem;">
+        {% if proposals %}
+            {% for p in proposals %}
+            <div class="card" style="padding:1.5rem; background: var(--bg-hover);">
+                <h3 style="font-size:1.1rem; margin-bottom:0.5rem; color:var(--clr-primary);">{{ p.title }}</h3>
+                <p style="color:var(--text-secondary); font-size:0.9rem; margin-bottom:1rem;">Отправлено: {{ p.created_at|date:"d.m.Y H:i" }}</p>
+                <div style="line-height:1.5;">{{ p.message|linebreaks }}</div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <p style="color:var(--clr-text-2);">Нет предложений.</p>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Ученики -->
+<div class="container" style="margin-top:2rem;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+        <h2>Ваши ученики</h2>
+        <button id="addStudentBtn" class="btn btn-primary">Добавить ученика</button>
+    </div>
+    
+    <div id="addStudentForm" class="card" style="display:none; padding:1.5rem; margin-bottom:1rem; background: var(--bg-hover);">
+        <h3>Новый ученик</h3>
+        <div class="form-group" style="margin-top:1rem;">
+            <label for="studentName">ФИО Ученика</label>
+            <input type="text" id="studentName" placeholder="Иван Иванов">
+        </div>
+        <div style="display:flex; gap:1rem;">
+            <button id="saveStudentBtn" class="btn btn-primary">Сохранить</button>
+            <button id="cancelStudentBtn" class="btn btn-secondary">Отмена</button>
+        </div>
+    </div>
+
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>ФИО</th>
+                    <th>Дата добавления</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if students %}
+                    {% for s in students %}
+                    <tr>
+                        <td><strong>{{ s.name }}</strong></td>
+                        <td>{{ s.date_added|date:"d.m.Y H:i" }}</td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr><td colspan="2" class="empty-state">Учеников нет</td></tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.getElementById('nav-panel').classList.add('active'); // highlight panel nav
+
+    const addStudentForm = document.getElementById('addStudentForm');
+    document.getElementById('addStudentBtn').addEventListener('click', () => {
+        addStudentForm.style.display = 'block';
+    });
+    document.getElementById('cancelStudentBtn').addEventListener('click', () => {
+        addStudentForm.style.display = 'none';
+        document.getElementById('studentName').value = '';
+    });
+
+    document.getElementById('saveStudentBtn').addEventListener('click', async () => {
+        const name = document.getElementById('studentName').value.trim();
+        if (!name) {
+            showToast('Введите ФИО', 'warning');
+            return;
+        }
+
+        const btn = document.getElementById('saveStudentBtn');
+        btn.disabled = true;
+        btn.textContent = 'Сохранение...';
+
+        try {
+            const resp = await fetch('/teacher/add-student/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ name: name })
+            });
+
+            const data = await resp.json();
+            if (data.success) {
+                showToast('Ученик добавлен', 'success');
+                setTimeout(() => window.location.reload(), 500);
+            } else {
+                showToast(data.error || 'Ошибка', 'error');
+            }
+        } catch(e) {
+            showToast('Server error', 'error');
+        } finally {
+            btn.disabled = false;
+            btn.textContent = 'Сохранить';
+        }
+    });
+</script>
+{% endblock %}

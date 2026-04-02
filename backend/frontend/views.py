@@ -18,6 +18,7 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.conf import settings
 import json
+from candidates.models import Teacher, Student, TeacherProposal
 
 
 logger = logging.getLogger('candidates')
@@ -127,3 +128,100 @@ def panel_logout(request):
     request.session.pop('panel_auth', None)
     logger.info("Выход из админ-панели")
     return redirect('panel-login-page')
+
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# КАБИНЕТ УЧИТЕЛЯ
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+def teacher_login_page(request):
+    """Страница логина для учителя."""
+    if request.session.get('teacher_id'):
+        return redirect('teacher-panel')
+    return render(request, 'frontend/teacher_login.html')
+
+@csrf_exempt
+def teacher_login(request):
+    """Обработка входа учителя."""
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+    try:
+        data = json.loads(request.body)
+    except (json.JSONDecodeError, ValueError):
+        return JsonResponse({'error': 'Invalid JSON'}, status=400)
+
+    username = str(data.get('username', '')).strip()
+    password = str(data.get('password', '')).strip()
+
+    try:
+        teacher = Teacher.objects.get(username=username)
+        # Check against bcrypt or plaintext for demo/admin ease
+        password_valid = False
+        if teacher.password_hash == password:
+            password_valid = True
+        else:
+            try:
+                password_valid = bcrypt.checkpw(
+                    password.encode('utf-8'),
+                    teacher.password_hash.encode('utf-8')
+                )
+            except Exception:
+                pass
+
+        if password_valid:
+            request.session['teacher_id'] = teacher.id
+            return JsonResponse({'success': True})
+        else:
+            return JsonResponse({'success': False, 'error': 'Неверный логин или пароль'}, status=401)
+    except Teacher.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Неверный логин или пароль'}, status=401)
+
+def teacher_logout(request):
+    """Выход из кабинета учителя."""
+    request.session.pop('teacher_id', None)
+    return redirect('teacher-login-page')
+
+def teacher_panel_view(request):
+    """Кабинет учителя: ученики и предложения."""
+    teacher_id = request.session.get('teacher_id')
+    if not teacher_id:
+        return redirect('teacher-login-page')
+    
+    try:
+        teacher = Teacher.objects.get(id=teacher_id)
+    except Teacher.DoesNotExist:
+        request.session.pop('teacher_id', None)
+        return redirect('teacher-login-page')
+
+    students = teacher.students.all().order_by('-date_added')
+    proposals = teacher.proposals.all().order_by('-created_at')
+
+    context = {
+        'teacher': teacher,
+        'students': students,
+        'proposals': proposals,
+    }
+    return render(request, 'frontend/teacher_panel.html', context)
+
+@csrf_exempt
+def teacher_add_student(request):
+    """Ввод ученика учителем."""
+    teacher_id = request.session.get('teacher_id')
+    if not teacher_id:
+        return JsonResponse({'error': 'Not authorized'}, status=401)
+
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+    try:
+        data = json.loads(request.body)
+        student_name = data.get('name', '').strip()
+        if not student_name:
+            return JsonResponse({'success': False, 'error': 'Имя ученика не может быть пустым'})
+
+        teacher = Teacher.objects.get(id=teacher_id)
+        Student.objects.create(teacher=teacher, name=student_name)
+        return JsonResponse({'success': True})
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)

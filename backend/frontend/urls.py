@@ -9,4 +9,11 @@ urlpatterns = [
     path('panel/login/', views.panel_login, name='panel-login'),
     path('panel/login-page/', views.panel_login_page, name='panel-login-page'),
     path('panel/logout/', views.panel_logout, name='panel-logout'),
+    
+    # ── Кабинет Учителя ─────────────────────────────
+    path('teacher/', views.teacher_panel_view, name='teacher-panel'),
+    path('teacher/login-page/', views.teacher_login_page, name='teacher-login-page'),
+    path('teacher/login/', views.teacher_login, name='teacher-login'),
+    path('teacher/logout/', views.teacher_logout, name='teacher-logout'),
+    path('teacher/add-student/', views.teacher_add_student, name='teacher-add-student'),
 ]

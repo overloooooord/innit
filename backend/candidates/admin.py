@@ -15,6 +15,7 @@ from django.contrib import admin
 from .models import (
     Candidate, ScoringResult,
     Application, MBTITestResult, LanguageTestResult,
+    Teacher, Student, TeacherProposal
 )
 
 
@@ -99,3 +100,23 @@ class LanguageTestResultAdmin(admin.ModelAdmin):
     )
     list_filter = ('language',)
     search_fields = ('application__name',)
+
+
+# ── Кабинет учителя ──────────────────────────────────────────
+
+@admin.register(Teacher)
+class TeacherAdmin(admin.ModelAdmin):
+    list_display = ('name', 'username', 'created_at')
+    search_fields = ('name', 'username')
+
+@admin.register(Student)
+class StudentAdmin(admin.ModelAdmin):
+    list_display = ('name', 'teacher', 'date_added')
+    list_filter = ('teacher',)
+    search_fields = ('name',)
+
+@admin.register(TeacherProposal)
+class TeacherProposalAdmin(admin.ModelAdmin):
+    list_display = ('title', 'teacher', 'created_at')
+    list_filter = ('teacher',)
+    search_fields = ('title', 'message')

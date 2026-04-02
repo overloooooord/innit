@@ -24,10 +24,14 @@ urlpatterns = [
     # ── Тесты ────────────────────────────────────────────────
     path('tests/mbti/', views.mbti_test_submit, name='mbti-test-submit'),
     path('tests/language/', views.language_test_submit, name='language-test-submit'),
+    path('tests/language/questions/', views.language_questions_list, name='language-questions'),
 
     # ── Админ ────────────────────────────────────────────────
     path('admin/login/', views.admin_login, name='admin-api-login'),
     path('admin/applications/', views.admin_applications, name='admin-applications'),
+
+    # ── Оценка заявки через ML ───────────────────────────────
+    path('applications/<int:pk>/score/', views.application_score, name='application-score'),
 
     # ── Кандидаты (ML pipeline — старые endpoints) ───────────
     path('candidates/', views.candidate_list_create, name='candidate-list-create'),
