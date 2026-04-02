@@ -2,6 +2,13 @@
 IMPORTANT: Personal/demographic fields (city, school_type, has_mentor,
 nomination_pre_score) and bot_metadata fields are intentionally NOT extracted
 as features. They are used only in fairness_audit.py for bias detection.
+
+Feature vector layout (used by single-stage CandidateScorer):
+  dims   0–17  → 18 structural features (education, experience, trajectory)
+  dims  18–22  → 5 SLPI clusters from bot_metadata.fingerprint_display
+
+ThreeStageScorer uses the three extract_*_features() functions directly
+so each XGBoost stage receives only its own slice.
 """
 
 import numpy as np
@@ -11,17 +18,49 @@ from config import (
     OLYMPIAD_LEVEL_MAP,
     PROJECT_ROLE_MAP,
     STRUCTURED_FEATURES,
+    SLPI_FEATURES,
     CURRENT_YEAR,
 )
 
 
 def extract_features(candidate: Dict[str, Any]) -> np.ndarray:
+    """Returns 23-dim vector: 18 structural + 5 SLPI."""
+    structural = extract_structural_features(candidate)
+    slpi       = extract_slpi_features(candidate)
+    return np.concatenate([structural, slpi]).astype(np.float32)
+
+
+def extract_features_dict(candidate: Dict[str, Any]) -> Dict[str, float]:
+    """Returns only the 18 structural features (for display, flags, SHAP labels)."""
+    return _build_feature_dict(candidate)
+
+
+def extract_structural_features(candidate: Dict[str, Any]) -> np.ndarray:
+    """Returns 18-dim structural feature vector. Used by ThreeStageScorer stage 1."""
     features = _build_feature_dict(candidate)
     return np.array([features[name] for name in STRUCTURED_FEATURES], dtype=np.float32)
 
 
-def extract_features_dict(candidate: Dict[str, Any]) -> Dict[str, float]:
-    return _build_feature_dict(candidate)
+def extract_slpi_features(candidate: Dict[str, Any]) -> np.ndarray:
+    """
+    Returns 5-dim SLPI vector from bot_metadata.fingerprint_display.
+    Used by ThreeStageScorer stage 2.
+    Returns zeros if fingerprint is absent or unreliable.
+    """
+    meta = candidate.get("bot_metadata", {})
+    if not meta.get("fingerprint_reliable", False):
+        return np.zeros(len(SLPI_FEATURES), dtype=np.float32)
+    display = meta.get("fingerprint_display", {})
+    return np.array(
+        [float(display.get(k, 0.0)) for k in SLPI_FEATURES],
+        dtype=np.float32,
+    )
+
+
+def extract_essay_features(candidate: Dict[str, Any]) -> np.ndarray:
+    """Returns 10-dim essay NLP feature vector. Delegates to nlp_model."""
+    from nlp_model import extract_essay_features as _nlp_extract
+    return _nlp_extract(candidate)
 
 
 def extract_batch(candidates: List[Dict[str, Any]]) -> np.ndarray:
@@ -202,8 +241,22 @@ if __name__ == "__main__":
     with open(sys.argv[1], "r", encoding="utf-8") as f:
         candidate = json.load(f)
 
+    from config import SLPI_FEATURES, ESSAY_FEATURES
+
     features = extract_features_dict(candidate)
-    print("\n=== Extracted Features (18) ===")
+    print("\n=== Structural Features (18) ===")
     for name, value in features.items():
         print(f"  {name:40s} = {value:.4f}")
-    print(f"\nTotal: {len(features)}")
+
+    slpi = extract_slpi_features(candidate)
+    print("\n=== SLPI Features (5) ===")
+    for name, value in zip(SLPI_FEATURES, slpi):
+        print(f"  {name:40s} = {value:.4f}")
+
+    essay = extract_essay_features(candidate)
+    print("\n=== Essay Features (10) ===")
+    for name, value in zip(ESSAY_FEATURES, essay):
+        print(f"  {name:40s} = {value:.4f}")
+
+    vec = extract_features(candidate)
+    print(f"\nCombined vector (stage 1+2): {len(vec)} dims")
