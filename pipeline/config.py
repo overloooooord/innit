@@ -30,6 +30,9 @@ LABEL_MAP = {
 
 LABEL_NAMES = ["reject", "maybe", "shortlist"]
 
+# Leadership Fingerprint vector size (scenario_engine.py)
+FINGERPRINT_SIZE = 500
+
 # 18 structural features per PROJECT_DOCUMENTATION.md
 # Explicitly excluded from scoring:
 #   bot_metadata fields (session_duration, pauses, typing_time) — unreliable, biased
@@ -60,11 +63,13 @@ STRUCTURED_FEATURES = [
     "f_failure_acknowledgment_ratio",
 ]
 
-# Feature groups for ablation study (indices into STRUCTURED_FEATURES)
+# Feature groups for ablation study (indices into 23-dim combined vector used by CandidateScorer)
+# Layout: 0–17 structural, 18–22 SLPI (fingerprint_display), 23–32 essay
 FEATURE_GROUPS = {
     "Education":  [0, 1, 2, 3, 4, 5, 6],
     "Experience": [7, 8, 9, 10, 11],
     "Trajectory": [12, 13, 14, 15, 16, 17],
+    "SLPI":       [18, 19, 20, 21, 22],
 }
 
 # Human-readable Russian descriptions for commission dashboard
@@ -87,7 +92,51 @@ FEATURE_DESCRIPTIONS = {
     "f_activity_years_span":          "Период активности (лет)",
     "f_persistence_signal":           "Упорство (продолжил после неудачи)",
     "f_failure_acknowledgment_ratio": "Доля проектов с признанием трудностей",
+    # SLPI (fingerprint_display)
+    "fp_model_the_way":     "SLPI: Пример для других (Model the Way)",
+    "fp_inspire_vision":    "SLPI: Вдохновляет на общее видение",
+    "fp_challenge_process": "SLPI: Бросает вызов процессу",
+    "fp_enable_others":     "SLPI: Развивает других",
+    "fp_encourage_heart":   "SLPI: Поддерживает команду",
+    # Essay — SLPI (зеркало fingerprint_display, но по тексту)
+    "essay_model_the_way":      "Эссе SLPI: Пример для других",
+    "essay_inspire_vision":     "Эссе SLPI: Вдохновляет на общее видение",
+    "essay_challenge_process":  "Эссе SLPI: Бросает вызов процессу",
+    "essay_enable_others":      "Эссе SLPI: Развивает других",
+    "essay_encourage_heart":    "Эссе SLPI: Поддерживает команду",
 }
+
+SLPI_FEATURES = [
+    "model_the_way",
+    "inspire_vision",
+    "challenge_process",
+    "enable_others",
+    "encourage_heart",
+]
+
+# 9 essay NLP features produced by nlp_model.extract_essay_features()
+# SLPI dims (4–8) mirror the same 5 Cornell SLPI categories as fingerprint_display,
+# allowing the commission to compare how a candidate describes themselves vs. how they behave.
+ESSAY_FEATURES = [
+    "essay_text_length_norm",      # 0
+    "essay_first_person_ratio",    # 1
+    "essay_action_verb_ratio",     # 2
+    "essay_concreteness",          # 3
+    "essay_model_the_way",         # 4
+    "essay_inspire_vision",        # 5
+    "essay_challenge_process",     # 6
+    "essay_enable_others",         # 7
+    "essay_encourage_heart",       # 8
+]
+
+# Stage weights — must sum to 1.0.
+STAGE_WEIGHTS = {
+    "structural":  0.5,
+    "fingerprint": 0.3,
+    "essay":       0.2,
+}
+
+THREE_STAGE_MODEL_PATH = "models/three_stage_model.pkl"
 
 XGBOOST_PARAMS = {
     "n_estimators": 200,
