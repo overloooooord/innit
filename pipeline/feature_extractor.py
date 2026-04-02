@@ -45,8 +45,10 @@ def extract_slpi_features(candidate: Dict[str, Any]) -> np.ndarray:
 
 
 def extract_essay_features(candidate: Dict[str, Any]) -> np.ndarray:
-    """Returns 10-dim essay NLP feature vector. Delegates to nlp_model."""
-    from nlp_model import extract_essay_features as _nlp_extract
+    """Returns 6-dim essay NLP feature vector (zero-shot SLPI + overall). Delegates to nlp.nlp_model."""
+    import sys, os
+    sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+    from nlp.nlp_model import extract_essay_features as _nlp_extract
     return _nlp_extract(candidate)
 
 

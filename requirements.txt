@@ -3,4 +3,8 @@ numpy>=1.24.0
 scipy>=1.11.0
 xgboost>=2.0.0          # Falls back to sklearn GradientBoosting if missing
 shap>=0.43.0            # Falls back to feature_importances_ if missing
-
+transformers
+torch
+sentencepiece
+deep-translator
+spacy

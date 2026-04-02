@@ -31,9 +31,13 @@ class CandidateScorer:
         predicted_cls = int(np.argmax(probabilities))
         confidence    = float(probabilities[predicted_cls])
 
+        import sys, os
+        sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+        from nlp.nlp_model import get_essay_nlp_result
+        essay_nlp   = get_essay_nlp_result(candidate)
         explanation = self.explainer.explain(feature_vector, predicted_cls)
         radar       = self._build_radar(candidate)
-        flags       = self._build_flags(feature_dict)
+        flags       = self._build_flags(feature_dict, essay_nlp)
         trajectory  = self._build_trajectory(candidate)
 
         return {
@@ -124,18 +128,26 @@ class CandidateScorer:
 
     # ── Flags ─────────────────────────────────────────────────────
 
-    def _build_flags(self, f: Dict[str, float]) -> Dict[str, Any]:
+    def _build_flags(self, f: Dict[str, float], essay_nlp: Optional[dict] = None) -> Dict[str, Any]:
         """
         Commission flags.
-        ai_detection and coherence — placeholders for NLP module.
-        These are shown to commission in the card, never enter the scoring model.
+        coherence — computed from essay NLP overall score if available.
+        ai_detection — placeholder (shown to commission, never enters scoring).
         """
+        if essay_nlp is not None:
+            overall = essay_nlp["scores"]["overall"]
+            if overall >= 6.5:
+                coherence_status, coherence_detail = "ok", f"Высокая когерентность эссе (overall {overall}/10)"
+            elif overall >= 4.0:
+                coherence_status, coherence_detail = "warning", f"Средняя когерентность эссе (overall {overall}/10)"
+            else:
+                coherence_status, coherence_detail = "alert", f"Низкая когерентность эссе (overall {overall}/10)"
+            coherence_flag = {"status": coherence_status, "label": "Когерентность профиля", "detail": coherence_detail}
+        else:
+            coherence_flag = {"status": "pending", "label": "Когерентность профиля", "detail": "Эссе не предоставлено"}
+
         flags: Dict[str, Any] = {
-            "coherence": {
-                "status": "pending",
-                "label":  "Когерентность профиля",
-                "detail": "Будет рассчитано NLP-модулем",
-            },
+            "coherence": coherence_flag,
             "ai_detection": {
                 "status": "pending",
                 "label":  "AI-детекция эссе",
@@ -351,12 +363,11 @@ class ThreeStageScorer:
             stage_proba["fingerprint"] = self.model_fingerprint.predict_proba(X_fp)[0]
 
         # Stage 3 — only if model trained and candidate has essay text
-        has_essay = bool(
-            candidate.get("essay", {}).get("text", "")
-            if isinstance(candidate.get("essay"), dict)
-            else candidate.get("essay")
-        )
-        if self.model_essay is not None and has_essay:
+        import sys, os
+        sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+        from nlp.nlp_model import get_essay_nlp_result
+        essay_nlp = get_essay_nlp_result(candidate)
+        if self.model_essay is not None and essay_nlp is not None:
             X_essay = extract_essay_features(candidate).reshape(1, -1)
             stage_proba["essay"] = self.model_essay.predict_proba(X_essay)[0]
 
@@ -402,7 +413,7 @@ class ThreeStageScorer:
                 ],
             },
             "radar":      self._build_radar(candidate),
-            "flags":      self._build_flags(feature_dict),
+            "flags":      self._build_flags(feature_dict, essay_nlp),
             "trajectory": self._build_trajectory(candidate),
             "feature_values": {
                 FEATURE_DESCRIPTIONS.get(k, k): round(v, 4)
@@ -485,13 +496,21 @@ class ThreeStageScorer:
             "status":            "ok",
         }
 
-    def _build_flags(self, f: Dict[str, float]) -> Dict[str, Any]:
+    def _build_flags(self, f: Dict[str, float], essay_nlp: Optional[dict] = None) -> Dict[str, Any]:
+        if essay_nlp is not None:
+            overall = essay_nlp["scores"]["overall"]
+            if overall >= 6.5:
+                coherence_status, coherence_detail = "ok", f"Высокая когерентность эссе (overall {overall}/10)"
+            elif overall >= 4.0:
+                coherence_status, coherence_detail = "warning", f"Средняя когерентность эссе (overall {overall}/10)"
+            else:
+                coherence_status, coherence_detail = "alert", f"Низкая когерентность эссе (overall {overall}/10)"
+            coherence_flag = {"status": coherence_status, "label": "Когерентность профиля", "detail": coherence_detail}
+        else:
+            coherence_flag = {"status": "pending", "label": "Когерентность профиля", "detail": "Эссе не предоставлено"}
+
         flags: Dict[str, Any] = {
-            "coherence": {
-                "status": "pending",
-                "label":  "Когерентность профиля",
-                "detail": "Будет рассчитано NLP-модулем",
-            },
+            "coherence": coherence_flag,
             "ai_detection": {
                 "status": "pending",
                 "label":  "AI-детекция эссе",

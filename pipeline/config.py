@@ -63,13 +63,14 @@ STRUCTURED_FEATURES = [
     "f_failure_acknowledgment_ratio",
 ]
 
-# Feature groups for ablation study (indices into 23-dim combined vector used by CandidateScorer)
-# Layout: 0–17 structural, 18–22 SLPI (fingerprint_display), 23–32 essay
+# Feature groups for ablation study
+# Layout: 0–17 structural, 18–22 SLPI (fingerprint_display), 23–28 essay NLP
 FEATURE_GROUPS = {
     "Education":  [0, 1, 2, 3, 4, 5, 6],
     "Experience": [7, 8, 9, 10, 11],
     "Trajectory": [12, 13, 14, 15, 16, 17],
     "SLPI":       [18, 19, 20, 21, 22],
+    "Essay":      [23, 24, 25, 26, 27, 28],
 }
 
 # Human-readable Russian descriptions for commission dashboard
@@ -98,12 +99,13 @@ FEATURE_DESCRIPTIONS = {
     "fp_challenge_process": "SLPI: Бросает вызов процессу",
     "fp_enable_others":     "SLPI: Развивает других",
     "fp_encourage_heart":   "SLPI: Поддерживает команду",
-    # Essay — SLPI (зеркало fingerprint_display, но по тексту)
-    "essay_model_the_way":      "Эссе SLPI: Пример для других",
-    "essay_inspire_vision":     "Эссе SLPI: Вдохновляет на общее видение",
-    "essay_challenge_process":  "Эссе SLPI: Бросает вызов процессу",
-    "essay_enable_others":      "Эссе SLPI: Развивает других",
-    "essay_encourage_heart":    "Эссе SLPI: Поддерживает команду",
+    # Essay — zero-shot SLPI (mDeBERTa, зеркало fingerprint_display, но по тексту)
+    "essay_model_the_way":         "Эссе SLPI: Пример для других",
+    "essay_inspire_shared_vision": "Эссе SLPI: Вдохновляет на общее видение",
+    "essay_challenge_the_process": "Эссе SLPI: Бросает вызов процессу",
+    "essay_enable_others_to_act":  "Эссе SLPI: Развивает других",
+    "essay_encourage_the_heart":   "Эссе SLPI: Поддерживает команду",
+    "essay_overall":               "Эссе SLPI: Общий балл лидерства",
 }
 
 SLPI_FEATURES = [
@@ -114,19 +116,17 @@ SLPI_FEATURES = [
     "encourage_heart",
 ]
 
-# 9 essay NLP features produced by nlp_model.extract_essay_features()
-# SLPI dims (4–8) mirror the same 5 Cornell SLPI categories as fingerprint_display,
-# allowing the commission to compare how a candidate describes themselves vs. how they behave.
+# 6 essay NLP features produced by nlp_model.extract_essay_features()
+# Zero-shot SLPI scores from mDeBERTa, normalized to 0–1.
+# Mirror the same 5 Cornell SLPI categories as fingerprint_display,
+# allowing the commission to compare self-described behaviour (essay) vs. revealed behaviour (scenarios).
 ESSAY_FEATURES = [
-    "essay_text_length_norm",      # 0
-    "essay_first_person_ratio",    # 1
-    "essay_action_verb_ratio",     # 2
-    "essay_concreteness",          # 3
-    "essay_model_the_way",         # 4
-    "essay_inspire_vision",        # 5
-    "essay_challenge_process",     # 6
-    "essay_enable_others",         # 7
-    "essay_encourage_heart",       # 8
+    "essay_model_the_way",          # 0
+    "essay_inspire_shared_vision",  # 1
+    "essay_challenge_the_process",  # 2
+    "essay_enable_others_to_act",   # 3
+    "essay_encourage_the_heart",    # 4
+    "essay_overall",                # 5
 ]
 
 # Stage weights — must sum to 1.0.
