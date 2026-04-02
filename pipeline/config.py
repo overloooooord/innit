@@ -132,8 +132,8 @@ ESSAY_FEATURES = [
 # Stage weights — must sum to 1.0.
 STAGE_WEIGHTS = {
     "structural":  0.5,
-    "fingerprint": 0.3,
-    "essay":       0.2,
+    "fingerprint": 0.25,
+    "essay":       0.25,
 }
 
 THREE_STAGE_MODEL_PATH = "models/three_stage_model.pkl"
