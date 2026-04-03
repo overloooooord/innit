@@ -153,9 +153,15 @@ def main():
         for f in result["explanation"]["top_negative_factors"]:
             print(f"     {f['description']} (вклад: {f['impact']:.4f})")
 
-        print(f"\n  Radar:")
-        for dim, val in result["radar"].items():
-            print(f"    {dim:20s} {'★' * val}{'☆' * (5 - val)}")
+        print(f"\n  Leadership Fingerprint (SLPI):")
+        radar = result["radar"]
+        print(f"    Status: {radar.get('status')}")
+        for dim in ("model_the_way", "inspire_vision", "challenge_process", "enable_others", "encourage_heart"):
+            val = radar.get(dim)
+            if val is not None:
+                print(f"    {dim:25s} {'█' * int(val * 20)} {val:.2f}")
+            else:
+                print(f"    {dim:25s} pending")
 
         out_path = f"outputs/score_{result['candidate_id']}.json"
         os.makedirs("outputs", exist_ok=True)
