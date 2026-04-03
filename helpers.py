@@ -168,11 +168,11 @@ def save_to_json(app_data):
             "age": app_data.age,
             "city": app_data.city,
             "region": app_data.region,
-            "school_type": app_data.school_type,
-            "languages": app_data.languages
         },
         "education": {
-            "gpa": app_data.gpa_raw,
+            "school_type": app_data.school_type,
+            "languages": app_data.languages,
+            "gpa": app_data.gpa,
             "olympiads": app_data.olympiads,
             "courses": app_data.courses
         },
@@ -180,6 +180,7 @@ def save_to_json(app_data):
             "projects": app_data.projects
         },
         "essay": app_data.essay_text,
+        "word_count": app_data.essay_word_count,
         "scenario_results": app_data.scenario_choices,
         "submitted_at": datetime.utcnow().isoformat()
     }
