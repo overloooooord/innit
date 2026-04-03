@@ -31,10 +31,18 @@ class CandidateScorer:
         predicted_cls = int(np.argmax(probabilities))
         confidence    = float(probabilities[predicted_cls])
 
-        import sys, os
-        sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
-        from nlp.nlp_model import get_essay_nlp_result
-        essay_nlp   = get_essay_nlp_result(candidate)
+        # NLP essay analysis — only import/run if essay has enough text
+        essay_nlp = None
+        essay_raw = candidate.get("essay", "")
+        essay_text = essay_raw.get("text", "") if isinstance(essay_raw, dict) else (essay_raw or "")
+        if essay_text and len(essay_text.split()) >= 50:
+            try:
+                import sys, os
+                sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+                from nlp.nlp_model import get_essay_nlp_result
+                essay_nlp = get_essay_nlp_result(candidate)
+            except Exception:
+                essay_nlp = None
         explanation = self.explainer.explain(feature_vector, predicted_cls)
         radar       = self._build_radar(candidate)
         flags       = self._build_flags(feature_dict, essay_nlp)
@@ -363,10 +371,17 @@ class ThreeStageScorer:
             stage_proba["fingerprint"] = self.model_fingerprint.predict_proba(X_fp)[0]
 
         # Stage 3 — only if model trained and candidate has essay text
-        import sys, os
-        sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
-        from nlp.nlp_model import get_essay_nlp_result
-        essay_nlp = get_essay_nlp_result(candidate)
+        essay_nlp = None
+        essay_raw = candidate.get("essay", "")
+        essay_text = essay_raw.get("text", "") if isinstance(essay_raw, dict) else (essay_raw or "")
+        if essay_text and len(essay_text.split()) >= 50:
+            try:
+                import sys, os
+                sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+                from nlp.nlp_model import get_essay_nlp_result
+                essay_nlp = get_essay_nlp_result(candidate)
+            except Exception:
+                essay_nlp = None
         if self.model_essay is not None and essay_nlp is not None:
             X_essay = extract_essay_features(candidate).reshape(1, -1)
             stage_proba["essay"] = self.model_essay.predict_proba(X_essay)[0]

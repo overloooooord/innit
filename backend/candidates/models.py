@@ -45,7 +45,15 @@ class Candidate(models.Model):
         return f"{self.name} ({self.city})"
 
     def to_pipeline_dict(self):
-        """Convert to the dict format expected by pipeline/scorer.py"""
+        """Convert to the dict format expected by pipeline/scorer.py
+
+        Origin pipeline expects:
+          - candidate["essay"]         → string or {"text": str} for NLP
+          - candidate["bot_metadata"]  → dict for SLPI radar (optional)
+          - candidate["personal"]      → personal info
+          - candidate["education"]     → education data
+          - candidate["experience"]    → experience data
+        """
         data = self.profile_data.copy()
         data['id'] = str(self.id)
         data['personal'] = {
@@ -58,6 +66,15 @@ class Candidate(models.Model):
         }
         if 'personal' in self.profile_data and 'languages' in self.profile_data['personal']:
             data['personal']['languages'] = self.profile_data['personal']['languages']
+
+        # Ensure essay is available for NLP module (origin scorer reads candidate["essay"])
+        if 'essay' not in data:
+            data['essay'] = ''
+
+        # Ensure bot_metadata exists for SLPI radar (graceful fallback to "pending")
+        if 'bot_metadata' not in data:
+            data['bot_metadata'] = {}
+
         return data
 
 
