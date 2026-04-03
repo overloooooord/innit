@@ -18,7 +18,8 @@ from keyboards import (
     kb_start, kb_about_back, kb_consent, kb_yes_skip,
     kb_olympiad_level, kb_prize, kb_add_more, kb_completed,
     kb_project_type, kb_role, kb_failure, kb_continued,
-    kb_go, kb_upload_file, kb_done
+    kb_go, kb_upload_file, kb_done,
+    kb_no_ielts, kb_no_ent, kb_skip_cert
 )
 from database import get_or_create_application, update_application, get_application
 from helpers import (
@@ -595,7 +596,120 @@ async def process_gpa(message: Message, state: FSMContext):
         await message.answer("Напиши средний балл числом. Например: 4.2 или 5")
         return
     gpa = extract_gpa(raw)
-    await update_application(message.from_user.id, gpa_raw=raw, gpa=gpa, funnel_stage="education_done")
+    await update_application(message.from_user.id, gpa_raw=raw, gpa=gpa)
+    await ask_ielts(message, state)
+
+
+async def ask_ielts(message: Message, state: FSMContext):
+    await message.answer(
+        "Напишите ваш балл IELTS:\n"
+        "Например: 7.5",
+        reply_markup=kb_no_ielts()
+    )
+    await state.set_state(EducationState.ielts_score)
+
+
+@router.message(EducationState.ielts_score)
+async def process_ielts_score(message: Message, state: FSMContext):
+    raw = message.text.strip().replace(",", ".")
+    try:
+        score = float(raw)
+        if not (0.0 <= score <= 9.0):
+            raise ValueError
+    except ValueError:
+        await message.answer("Напиши балл числом от 0 до 9. Например: 7.5")
+        return
+    await update_application(message.from_user.id, ielts_score=raw)
+    await ask_ent(message, state)
+
+
+@router.callback_query(EducationState.ielts_score, F.data == "no_ielts")
+async def no_ielts(callback: CallbackQuery, state: FSMContext):
+    await callback.message.edit_text("IELTS пропущен.")
+    await ask_ent(callback.message, state)
+    await callback.answer()
+
+
+async def ask_ent(message: Message, state: FSMContext):
+    await message.answer(
+        "Напишите ваш балл ЕНТ:\n"
+        "Например: 120",
+        reply_markup=kb_no_ent()
+    )
+    await state.set_state(EducationState.ent_score)
+
+
+@router.message(EducationState.ent_score)
+async def process_ent_score(message: Message, state: FSMContext):
+    raw = message.text.strip()
+    try:
+        score = int(raw)
+        if not (0 <= score <= 140):
+            raise ValueError
+    except ValueError:
+        await message.answer("Напиши балл ЕНТ числом от 0 до 140. Например: 120")
+        return
+    await update_application(message.from_user.id, ent_score=raw)
+    await ask_test_certs(message, state)
+
+
+@router.callback_query(EducationState.ent_score, F.data == "no_ent")
+async def no_ent(callback: CallbackQuery, state: FSMContext):
+    await callback.message.edit_text("ЕНТ пропущен.")
+    await ask_test_certs(callback.message, state)
+    await callback.answer()
+
+
+async def ask_test_certs(message: Message, state: FSMContext):
+    await message.answer(
+        "📎 Загрузите сертификаты IELTS / ЕНТ.\n\n"
+        "Отправь файл(ы) — PDF или фото.\n"
+        "Когда закончишь — нажми «Пропустить» или /done.",
+        reply_markup=kb_skip_cert()
+    )
+    await state.set_state(EducationState.cert_upload)
+
+
+@router.message(EducationState.cert_upload, F.document | F.photo)
+async def handle_cert_upload(message: Message, state: FSMContext):
+    file_info = {"category": "certificate"}
+    if message.document:
+        file_info.update({
+            "type": "document",
+            "file_id": message.document.file_id,
+            "file_name": message.document.file_name,
+            "mime_type": message.document.mime_type,
+            "file_size": message.document.file_size,
+        })
+    elif message.photo:
+        photo = message.photo[-1]
+        file_info.update({
+            "type": "photo",
+            "file_id": photo.file_id,
+            "file_size": photo.file_size,
+        })
+    app = await get_application(message.from_user.id)
+    files = list(app.uploaded_files or [])
+    files.append(file_info)
+    await update_application(message.from_user.id, uploaded_files=files)
+    await message.answer(f"✅ Сертификат #{len(files)} получен. Отправь ещё или нажми «Пропустить».",
+                         reply_markup=kb_skip_cert())
+
+
+@router.callback_query(EducationState.cert_upload, F.data == "skip_cert")
+async def skip_cert(callback: CallbackQuery, state: FSMContext):
+    await callback.message.edit_text("Сертификаты сохранены ✅")
+    await after_certs(callback.message, state, callback.from_user.id)
+    await callback.answer()
+
+
+@router.message(EducationState.cert_upload, F.text.lower().in_(["готово", "done", "/done"]))
+async def cert_done_text(message: Message, state: FSMContext):
+    await after_certs(message, state, message.from_user.id)
+
+
+async def after_certs(message: Message, state: FSMContext, user_id: int):
+    await update_application(user_id, funnel_stage="education_done")
     await message.answer(
         "Участвовал(а) ли ты в олимпиадах или научных конкурсах?",
         reply_markup=kb_yes_skip()
