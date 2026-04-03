@@ -1,57 +1,67 @@
 from aiogram.fsm.state import State, StatesGroup
 
 
-class Form(StatesGroup):
-    # Personal info
-    last_name = State()
-    first_name = State()
-    patronymic = State()
+class ConsentState(StatesGroup):
+    waiting = State()
+
+
+class PersonalState(StatesGroup):
+    name = State()
     age = State()
     city = State()
-    city_type = State()
     region = State()
 
-    # Education
+
+class EducationState(StatesGroup):
     school_type = State()
-    school_name = State()
-    gpa = State()
-
-    # Scores
-    ent_score = State()
-    ent_document = State()
-    ielts_score = State()
-    ielts_document = State()
-    toefl_score = State()
-    toefl_document = State()
-
-    # Languages
     languages = State()
-    english_level = State()
-
-    # Projects
-    projects_menu = State()
-    project_name = State()
-    project_description = State()
-    project_role = State()
-    project_scale = State()
-
+    gpa = State()
     # Olympiads
-    olympiads_menu = State()
-    olympiad_name = State()
+    olympiad_filter = State()
+    olympiad_subject = State()
+    olympiad_year = State()
     olympiad_level = State()
-    olympiad_result = State()
+    olympiad_prize = State()
+    olympiad_loop = State()
+    # Courses
+    course_filter = State()
+    course_name = State()
+    course_platform = State()
+    course_year = State()
+    course_completed = State()
+    course_loop = State()
 
-    # Experience
-    volunteer_experience = State()
-    work_experience = State()
 
-    # Essays
-    essay_university = State()
-    essay_leadership = State()
-    essay_challenges = State()
+class ExperienceState(StatesGroup):
+    filter = State()
+    name = State()
+    type = State()
+    year = State()
+    role = State()
+    team_size = State()
+    description = State()
+    failure_filter = State()
+    failure_note = State()
+    continued = State()
+    loop = State()
 
-    # Circle
-    circle = State()
 
-    # Review
-    review = State()
+class EssayState(StatesGroup):
+    writing = State()
+
+
+class ScenarioState(StatesGroup):
+    intro = State()
+    answering = State()
+    step_1 = State()
+    step_2a = State()
+    step_2b = State()
+    step_2c = State()
+    step_2d = State()
+    step_3 = State()
+    step_4 = State()
+    done = State()
+
+
+class FileUploadState(StatesGroup):
+    waiting = State()

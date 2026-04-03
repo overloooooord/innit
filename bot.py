@@ -3,28 +3,25 @@ import logging
 import os
 from aiogram import Bot, Dispatcher
 from aiogram.fsm.storage.memory import MemoryStorage
-from dotenv import load_dotenv
 
-from handlers import router
+from config import BOT_TOKEN
 from database import init_db
+from handlers import router
 
-load_dotenv()
-
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-)
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
 async def main():
-    bot = Bot(token=os.getenv("BOT_TOKEN"))
-    dp = Dispatcher(storage=MemoryStorage())
+    bot = Bot(token=BOT_TOKEN)
+    storage = MemoryStorage()
+    dp = Dispatcher(storage=storage)
     dp.include_router(router)
 
     await init_db()
     logger.info("Database initialized")
 
+    await bot.delete_webhook(drop_pending_updates=True)
     logger.info("Bot started")
     await dp.start_polling(bot)
 
