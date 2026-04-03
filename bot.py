@@ -3,6 +3,7 @@ import logging
 import os
 from aiogram import Bot, Dispatcher
 from aiogram.fsm.storage.memory import MemoryStorage
+from database import init_db
 
 from config import BOT_TOKEN
 from database import init_db
@@ -27,4 +28,7 @@ async def main():
 
 
 if __name__ == "__main__":
+    # asyncio.run(init_db())
     asyncio.run(main())
+    
+    print("Таблицы успешно созданы в Supabase!")
