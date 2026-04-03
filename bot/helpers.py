@@ -130,6 +130,8 @@ def build_summary(app) -> str:
         f"*Тип школы:* {app.school_type or '—'}\n",
         f"*Языки:* {', '.join(app.languages) if app.languages else '—'}\n",
         f"*GPA:* {app.gpa_raw or '—'}",
+        f"*IELTS:* {app.ielts_score or '—'}",
+        f"*ЕНТ:* {app.ent_score or '—'}",
         "",
         f"*Олимпиады:* {len(app.olympiads or [])} шт.",
         f"*Курсы:* {len(app.courses or [])} шт.",
@@ -168,26 +170,36 @@ def save_to_json(app_data):
             "age": app_data.age,
             "city": app_data.city,
             "region": app_data.region,
+            "school_type": app_data.school_type,
+            "languages": app_data.languages or [],
         },
         "education": {
-            "school_type": app_data.school_type,
-            "languages": app_data.languages,
             "gpa": app_data.gpa,
-            "olympiads": app_data.olympiads,
-            "courses": app_data.courses
+            "ielts_score": app_data.ielts_score,
+            "ent_score": app_data.ent_score,
+            "olympiads": app_data.olympiads or [],
+            "courses": app_data.courses or [],
         },
         "experience": {
-            "projects": app_data.projects
+            "projects": app_data.projects or [],
         },
-        "essay": app_data.essay_text,
-        "word_count": app_data.essay_word_count,
+        "essay": {
+            "text": app_data.essay_text,
+            "word_count": app_data.essay_word_count,
+        },
+        "bot_metadata": {
+            "fingerprint_display": app_data.fingerprint_display,
+            "fingerprint_reliable": app_data.fingerprint_reliable or False,
+            "timer_violations": app_data.timer_violations or 0,
+            "funnel_stage": app_data.funnel_stage,
+        },
         "scenario_results": app_data.scenario_choices,
-        "submitted_at": datetime.utcnow().isoformat()
+        "submitted_at": datetime.utcnow().isoformat(),
     }
 
     file_path = f"model_inputs/user_{app_data.telegram_id}.json"
-    
+
     with open(file_path, "w", encoding="utf-8") as f:
         json.dump(result, f, ensure_ascii=False, indent=4)
-    
+
     return file_path

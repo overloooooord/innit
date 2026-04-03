@@ -149,6 +149,24 @@ def kb_go():
     ])
 
 
+def kb_no_ielts():
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="Если нет — нажми сюда", callback_data="no_ielts")]
+    ])
+
+
+def kb_no_ent():
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="Если нет — нажми сюда", callback_data="no_ent")]
+    ])
+
+
+def kb_skip_cert():
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="➡️ Пропустить", callback_data="skip_cert")]
+    ])
+
+
 def kb_upload_file():
     return InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="📎 Прикрепить файл", callback_data="upload_file")],

@@ -45,6 +45,10 @@ class Application(Base):
     gpa: Mapped[float | None] = mapped_column(Float)
     languages: Mapped[list[str] | None] = mapped_column(JSON, default=[])
 
+    # IELTS / ENT
+    ielts_score: Mapped[str | None] = mapped_column(String(20))
+    ent_score: Mapped[str | None] = mapped_column(String(20))
+
     # education arrays (JSON)
     olympiads: Mapped[dict | None] = mapped_column(JSON, default=list)
     courses: Mapped[dict | None] = mapped_column(JSON, default=list)
@@ -64,6 +68,15 @@ class Application(Base):
 
     # files
     uploaded_files: Mapped[dict | None] = mapped_column(JSON, default=list)
+
+    # pipeline scoring results (written back by the ML pipeline)
+    score_prediction:    Mapped[str | None]   = mapped_column(String(20))
+    score_confidence:    Mapped[float | None] = mapped_column(Float)
+    score_probabilities: Mapped[dict | None]  = mapped_column(JSON)
+    score_explanation:   Mapped[dict | None]  = mapped_column(JSON)
+    score_radar:         Mapped[dict | None]  = mapped_column(JSON)
+    score_flags:         Mapped[dict | None]  = mapped_column(JSON)
+    scored_at:           Mapped[datetime | None] = mapped_column(DateTime)
 
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 

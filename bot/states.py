@@ -16,6 +16,10 @@ class EducationState(StatesGroup):
     school_type = State()
     languages = State()
     gpa = State()
+    # IELTS / ENT
+    ielts_score = State()
+    ent_score = State()
+    cert_upload = State()
     # Olympiads
     olympiad_filter = State()
     olympiad_subject = State()
