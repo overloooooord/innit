@@ -72,7 +72,15 @@
         "enable_others": 0.8,
         "encourage_heart": 0.6
       },
-      "fingerprint_reliable": true
+      "fingerprint_reliable": true,
+      "essay_nlp": {
+        "model_the_way": 4.2,
+        "inspire_shared_vision": 6.2,
+        "challenge_the_process": 6.9,
+        "enable_others_to_act": 6.5,
+        "encourage_the_heart": 4.9,
+        "overall": 5.7
+      }
     },
     "label": "shortlist"
   },
@@ -129,7 +137,15 @@
         "enable_others": 0.7,
         "encourage_heart": 0.8
       },
-      "fingerprint_reliable": true
+      "fingerprint_reliable": true,
+      "essay_nlp": {
+        "model_the_way": 2.6,
+        "inspire_shared_vision": 5.7,
+        "challenge_the_process": 7.1,
+        "enable_others_to_act": 6.6,
+        "encourage_the_heart": 5.4,
+        "overall": 5.5
+      }
     },
     "label": "shortlist"
   },
@@ -206,7 +222,15 @@
         "enable_others": 0.6,
         "encourage_heart": 0.5
       },
-      "fingerprint_reliable": true
+      "fingerprint_reliable": true,
+      "essay_nlp": {
+        "model_the_way": 0.7,
+        "inspire_shared_vision": 2.8,
+        "challenge_the_process": 3.1,
+        "enable_others_to_act": 3.0,
+        "encourage_the_heart": 0,
+        "overall": 1.9
+      }
     },
     "label": "shortlist"
   },
@@ -277,7 +301,15 @@
         "enable_others": 0.9,
         "encourage_heart": 0.5
       },
-      "fingerprint_reliable": true
+      "fingerprint_reliable": true,
+      "essay_nlp": {
+        "model_the_way": 1.8,
+        "inspire_shared_vision": 4.9,
+        "challenge_the_process": 5.5,
+        "enable_others_to_act": 4.2,
+        "encourage_the_heart": 2.8,
+        "overall": 3.8
+      }
     },
     "label": "shortlist"
   },
@@ -341,7 +373,15 @@
         "enable_others": 0.6,
         "encourage_heart": 0.7
       },
-      "fingerprint_reliable": true
+      "fingerprint_reliable": true,
+      "essay_nlp": {
+        "model_the_way": 0,
+        "inspire_shared_vision": 2.9,
+        "challenge_the_process": 4.6,
+        "enable_others_to_act": 3.4,
+        "encourage_the_heart": 0.2,
+        "overall": 2.2
+      }
     },
     "label": "shortlist"
   },
@@ -418,7 +458,15 @@
         "enable_others": 0.8,
         "encourage_heart": 0.5
       },
-      "fingerprint_reliable": true
+      "fingerprint_reliable": true,
+      "essay_nlp": {
+        "model_the_way": 0.7,
+        "inspire_shared_vision": 2.0,
+        "challenge_the_process": 7.0,
+        "enable_others_to_act": 3.9,
+        "encourage_the_heart": 0,
+        "overall": 2.7
+      }
     },
     "label": "shortlist"
   },
@@ -489,7 +537,15 @@
         "enable_others": 0.7,
         "encourage_heart": 0.8
       },
-      "fingerprint_reliable": true
+      "fingerprint_reliable": true,
+      "essay_nlp": {
+        "model_the_way": 4.2,
+        "inspire_shared_vision": 5.5,
+        "challenge_the_process": 7.9,
+        "enable_others_to_act": 4.9,
+        "encourage_the_heart": 5.4,
+        "overall": 5.6
+      }
     },
     "label": "shortlist"
   },
@@ -546,7 +602,15 @@
         "enable_others": 0.8,
         "encourage_heart": 0.7
       },
-      "fingerprint_reliable": true
+      "fingerprint_reliable": true,
+      "essay_nlp": {
+        "model_the_way": 0.4,
+        "inspire_shared_vision": 3.3,
+        "challenge_the_process": 7.7,
+        "enable_others_to_act": 3.5,
+        "encourage_the_heart": 4.2,
+        "overall": 3.8
+      }
     },
     "label": "shortlist"
   },
@@ -623,7 +687,15 @@
         "enable_others": 0.8,
         "encourage_heart": 0.6
       },
-      "fingerprint_reliable": true
+      "fingerprint_reliable": true,
+      "essay_nlp": {
+        "model_the_way": 3.2,
+        "inspire_shared_vision": 4.1,
+        "challenge_the_process": 6.6,
+        "enable_others_to_act": 6.8,
+        "encourage_the_heart": 5.7,
+        "overall": 5.3
+      }
     },
     "label": "shortlist"
   },
@@ -688,7 +760,15 @@
         "enable_others": 0.8,
         "encourage_heart": 0.6
       },
-      "fingerprint_reliable": true
+      "fingerprint_reliable": true,
+      "essay_nlp": {
+        "model_the_way": 1.4,
+        "inspire_shared_vision": 4.3,
+        "challenge_the_process": 3.8,
+        "enable_others_to_act": 3.9,
+        "encourage_the_heart": 2.1,
+        "overall": 3.1
+      }
     },
     "label": "shortlist"
   },
@@ -752,7 +832,15 @@
         "enable_others": 0.9,
         "encourage_heart": 0.8
       },
-      "fingerprint_reliable": true
+      "fingerprint_reliable": true,
+      "essay_nlp": {
+        "model_the_way": 1.8,
+        "inspire_shared_vision": 3.4,
+        "challenge_the_process": 3.9,
+        "enable_others_to_act": 4.3,
+        "encourage_the_heart": 1.5,
+        "overall": 3.0
+      }
     },
     "label": "shortlist"
   },
@@ -828,7 +916,15 @@
         "enable_others": 0.7,
         "encourage_heart": 0.5
       },
-      "fingerprint_reliable": true
+      "fingerprint_reliable": true,
+      "essay_nlp": {
+        "model_the_way": 1.7,
+        "inspire_shared_vision": 5.6,
+        "challenge_the_process": 4.3,
+        "enable_others_to_act": 4.3,
+        "encourage_the_heart": 1.0,
+        "overall": 3.4
+      }
     },
     "label": "shortlist"
   },
@@ -899,7 +995,15 @@
         "enable_others": 0.8,
         "encourage_heart": 0.6
       },
-      "fingerprint_reliable": true
+      "fingerprint_reliable": true,
+      "essay_nlp": {
+        "model_the_way": 0,
+        "inspire_shared_vision": 2.5,
+        "challenge_the_process": 5.4,
+        "enable_others_to_act": 2.5,
+        "encourage_the_heart": 0,
+        "overall": 2.1
+      }
     },
     "label": "shortlist"
   },
@@ -963,7 +1067,15 @@
         "enable_others": 0.7,
         "encourage_heart": 0.5
       },
-      "fingerprint_reliable": true
+      "fingerprint_reliable": true,
+      "essay_nlp": {
+        "model_the_way": 1.7,
+        "inspire_shared_vision": 4.7,
+        "challenge_the_process": 3.5,
+        "enable_others_to_act": 3.9,
+        "encourage_the_heart": 2.3,
+        "overall": 3.2
+      }
     },
     "label": "shortlist"
   },
@@ -1034,7 +1146,15 @@
         "enable_others": 0.7,
         "encourage_heart": 0.9
       },
-      "fingerprint_reliable": true
+      "fingerprint_reliable": true,
+      "essay_nlp": {
+        "model_the_way": 3.0,
+        "inspire_shared_vision": 3.3,
+        "challenge_the_process": 2.7,
+        "enable_others_to_act": 5.0,
+        "encourage_the_heart": 0,
+        "overall": 2.8
+      }
     },
     "label": "shortlist"
   },
@@ -1110,7 +1230,15 @@
         "enable_others": 0.7,
         "encourage_heart": 0.4
       },
-      "fingerprint_reliable": true
+      "fingerprint_reliable": true,
+      "essay_nlp": {
+        "model_the_way": 1.2,
+        "inspire_shared_vision": 3.5,
+        "challenge_the_process": 6.0,
+        "enable_others_to_act": 3.8,
+        "encourage_the_heart": 1.1,
+        "overall": 3.1
+      }
     },
     "label": "shortlist"
   },
@@ -1174,7 +1302,15 @@
         "enable_others": 0.8,
         "encourage_heart": 0.7
       },
-      "fingerprint_reliable": true
+      "fingerprint_reliable": true,
+      "essay_nlp": {
+        "model_the_way": 0,
+        "inspire_shared_vision": 0.8,
+        "challenge_the_process": 3.0,
+        "enable_others_to_act": 0.3,
+        "encourage_the_heart": 0,
+        "overall": 0.8
+      }
     },
     "label": "shortlist"
   },
@@ -1239,7 +1375,15 @@
         "enable_others": 0.9,
         "encourage_heart": 0.8
       },
-      "fingerprint_reliable": true
+      "fingerprint_reliable": true,
+      "essay_nlp": {
+        "model_the_way": 0.9,
+        "inspire_shared_vision": 3.3,
+        "challenge_the_process": 4.5,
+        "enable_others_to_act": 3.7,
+        "encourage_the_heart": 0.2,
+        "overall": 2.5
+      }
     },
     "label": "shortlist"
   },
@@ -1316,7 +1460,15 @@
         "enable_others": 0.7,
         "encourage_heart": 0.6
       },
-      "fingerprint_reliable": true
+      "fingerprint_reliable": true,
+      "essay_nlp": {
+        "model_the_way": 3.3,
+        "inspire_shared_vision": 5.0,
+        "challenge_the_process": 5.8,
+        "enable_others_to_act": 4.4,
+        "encourage_the_heart": 3.0,
+        "overall": 4.3
+      }
     },
     "label": "shortlist"
   },
@@ -1373,7 +1525,15 @@
         "enable_others": 0.7,
         "encourage_heart": 0.8
       },
-      "fingerprint_reliable": true
+      "fingerprint_reliable": true,
+      "essay_nlp": {
+        "model_the_way": 2.6,
+        "inspire_shared_vision": 3.3,
+        "challenge_the_process": 4.5,
+        "enable_others_to_act": 2.4,
+        "encourage_the_heart": 2.5,
+        "overall": 3.1
+      }
     },
     "label": "shortlist"
   },
@@ -1438,7 +1598,15 @@
         "enable_others": 0.8,
         "encourage_heart": 0.8
       },
-      "fingerprint_reliable": true
+      "fingerprint_reliable": true,
+      "essay_nlp": {
+        "model_the_way": 0.5,
+        "inspire_shared_vision": 3.2,
+        "challenge_the_process": 6.7,
+        "enable_others_to_act": 5.9,
+        "encourage_the_heart": 1.5,
+        "overall": 3.6
+      }
     },
     "label": "shortlist"
   },
@@ -1509,7 +1677,15 @@
         "enable_others": 0.7,
         "encourage_heart": 0.5
       },
-      "fingerprint_reliable": true
+      "fingerprint_reliable": true,
+      "essay_nlp": {
+        "model_the_way": 2.4,
+        "inspire_shared_vision": 2.5,
+        "challenge_the_process": 4.2,
+        "enable_others_to_act": 3.5,
+        "encourage_the_heart": 1.6,
+        "overall": 2.8
+      }
     },
     "label": "shortlist"
   },
@@ -1566,7 +1742,15 @@
         "enable_others": 0.8,
         "encourage_heart": 0.7
       },
-      "fingerprint_reliable": true
+      "fingerprint_reliable": true,
+      "essay_nlp": {
+        "model_the_way": 0.5,
+        "inspire_shared_vision": 4.2,
+        "challenge_the_process": 3.6,
+        "enable_others_to_act": 3.4,
+        "encourage_the_heart": 1.3,
+        "overall": 2.6
+      }
     },
     "label": "shortlist"
   },
@@ -1643,7 +1827,15 @@
         "enable_others": 0.8,
         "encourage_heart": 0.6
       },
-      "fingerprint_reliable": true
+      "fingerprint_reliable": true,
+      "essay_nlp": {
+        "model_the_way": 1.8,
+        "inspire_shared_vision": 4.4,
+        "challenge_the_process": 4.1,
+        "enable_others_to_act": 2.9,
+        "encourage_the_heart": 2.2,
+        "overall": 3.1
+      }
     },
     "label": "shortlist"
   },
@@ -1720,7 +1912,15 @@
         "enable_others": 0.8,
         "encourage_heart": 0.5
       },
-      "fingerprint_reliable": true
+      "fingerprint_reliable": true,
+      "essay_nlp": {
+        "model_the_way": 1.5,
+        "inspire_shared_vision": 4.9,
+        "challenge_the_process": 6.6,
+        "enable_others_to_act": 3.5,
+        "encourage_the_heart": 2.4,
+        "overall": 3.8
+      }
     },
     "label": "shortlist"
   },
@@ -1777,7 +1977,15 @@
         "enable_others": 0.9,
         "encourage_heart": 0.7
       },
-      "fingerprint_reliable": true
+      "fingerprint_reliable": true,
+      "essay_nlp": {
+        "model_the_way": 3.3,
+        "inspire_shared_vision": 5.2,
+        "challenge_the_process": 5.8,
+        "enable_others_to_act": 5.3,
+        "encourage_the_heart": 2.2,
+        "overall": 4.4
+      }
     },
     "label": "shortlist"
   },
@@ -1842,7 +2050,15 @@
         "enable_others": 0.8,
         "encourage_heart": 0.6
       },
-      "fingerprint_reliable": true
+      "fingerprint_reliable": true,
+      "essay_nlp": {
+        "model_the_way": 0,
+        "inspire_shared_vision": 4.0,
+        "challenge_the_process": 7.3,
+        "enable_others_to_act": 4.8,
+        "encourage_the_heart": 0,
+        "overall": 3.2
+      }
     },
     "label": "shortlist"
   },
@@ -1913,7 +2129,15 @@
         "enable_others": 0.7,
         "encourage_heart": 0.7
       },
-      "fingerprint_reliable": true
+      "fingerprint_reliable": true,
+      "essay_nlp": {
+        "model_the_way": 1.3,
+        "inspire_shared_vision": 3.4,
+        "challenge_the_process": 4.0,
+        "enable_others_to_act": 2.6,
+        "encourage_the_heart": 4.0,
+        "overall": 3.1
+      }
     },
     "label": "shortlist"
   },
@@ -1978,7 +2202,15 @@
         "enable_others": 0.7,
         "encourage_heart": 0.4
       },
-      "fingerprint_reliable": true
+      "fingerprint_reliable": true,
+      "essay_nlp": {
+        "model_the_way": 0,
+        "inspire_shared_vision": 3.2,
+        "challenge_the_process": 3.7,
+        "enable_others_to_act": 3.2,
+        "encourage_the_heart": 0,
+        "overall": 2.0
+      }
     },
     "label": "shortlist"
   },
@@ -2035,7 +2267,15 @@
         "enable_others": 0.7,
         "encourage_heart": 0.8
       },
-      "fingerprint_reliable": true
+      "fingerprint_reliable": true,
+      "essay_nlp": {
+        "model_the_way": 0.3,
+        "inspire_shared_vision": 3.6,
+        "challenge_the_process": 2.8,
+        "enable_others_to_act": 1.6,
+        "encourage_the_heart": 2.8,
+        "overall": 2.2
+      }
     },
     "label": "shortlist"
   },
@@ -2085,7 +2325,15 @@
         "enable_others": 0.3,
         "encourage_heart": 0.3
       },
-      "fingerprint_reliable": true
+      "fingerprint_reliable": true,
+      "essay_nlp": {
+        "model_the_way": 4.8,
+        "inspire_shared_vision": 6.6,
+        "challenge_the_process": 5.2,
+        "enable_others_to_act": 7.7,
+        "encourage_the_heart": 4.7,
+        "overall": 5.8
+      }
     },
     "label": "reject"
   },
@@ -2131,7 +2379,15 @@
         "enable_others": 0.2,
         "encourage_heart": 0.4
       },
-      "fingerprint_reliable": true
+      "fingerprint_reliable": true,
+      "essay_nlp": {
+        "model_the_way": 5.3,
+        "inspire_shared_vision": 7.7,
+        "challenge_the_process": 6.4,
+        "enable_others_to_act": 6.4,
+        "encourage_the_heart": 4.2,
+        "overall": 6.0
+      }
     },
     "label": "reject"
   },
@@ -2202,7 +2458,15 @@
         "enable_others": 0.3,
         "encourage_heart": 0.3
       },
-      "fingerprint_reliable": true
+      "fingerprint_reliable": true,
+      "essay_nlp": {
+        "model_the_way": 3.7,
+        "inspire_shared_vision": 4.9,
+        "challenge_the_process": 6.6,
+        "enable_others_to_act": 5.0,
+        "encourage_the_heart": 2.8,
+        "overall": 4.6
+      }
     },
     "label": "reject"
   },
@@ -2259,7 +2523,15 @@
         "enable_others": 0.2,
         "encourage_heart": 0.3
       },
-      "fingerprint_reliable": true
+      "fingerprint_reliable": true,
+      "essay_nlp": {
+        "model_the_way": 2.4,
+        "inspire_shared_vision": 4.7,
+        "challenge_the_process": 3.9,
+        "enable_others_to_act": 6.5,
+        "encourage_the_heart": 0.6,
+        "overall": 3.6
+      }
     },
     "label": "reject"
   },
@@ -2355,7 +2627,15 @@
         "enable_others": 0.3,
         "encourage_heart": 0.4
       },
-      "fingerprint_reliable": true
+      "fingerprint_reliable": true,
+      "essay_nlp": {
+        "model_the_way": 6.5,
+        "inspire_shared_vision": 7.2,
+        "challenge_the_process": 5.5,
+        "enable_others_to_act": 6.0,
+        "encourage_the_heart": 5.3,
+        "overall": 6.1
+      }
     },
     "label": "reject"
   },
@@ -2419,7 +2699,15 @@
         "enable_others": 0.3,
         "encourage_heart": 0.4
       },
-      "fingerprint_reliable": true
+      "fingerprint_reliable": true,
+      "essay_nlp": {
+        "model_the_way": 5.8,
+        "inspire_shared_vision": 7.4,
+        "challenge_the_process": 5.2,
+        "enable_others_to_act": 8.0,
+        "encourage_the_heart": 4.3,
+        "overall": 6.1
+      }
     },
     "label": "reject"
   },
@@ -2484,7 +2772,15 @@
         "enable_others": 0.3,
         "encourage_heart": 0.4
       },
-      "fingerprint_reliable": true
+      "fingerprint_reliable": true,
+      "essay_nlp": {
+        "model_the_way": 4.2,
+        "inspire_shared_vision": 7.3,
+        "challenge_the_process": 7.3,
+        "enable_others_to_act": 7.4,
+        "encourage_the_heart": 5.0,
+        "overall": 6.2
+      }
     },
     "label": "reject"
   },
@@ -2598,7 +2894,15 @@
         "enable_others": 0.3,
         "encourage_heart": 0.4
       },
-      "fingerprint_reliable": true
+      "fingerprint_reliable": true,
+      "essay_nlp": {
+        "model_the_way": 4.7,
+        "inspire_shared_vision": 6.0,
+        "challenge_the_process": 2.1,
+        "enable_others_to_act": 5.9,
+        "encourage_the_heart": 3.2,
+        "overall": 4.4
+      }
     },
     "label": "reject"
   },
@@ -2663,7 +2967,15 @@
         "enable_others": 0.4,
         "encourage_heart": 0.3
       },
-      "fingerprint_reliable": true
+      "fingerprint_reliable": true,
+      "essay_nlp": {
+        "model_the_way": 3.8,
+        "inspire_shared_vision": 6.1,
+        "challenge_the_process": 4.9,
+        "enable_others_to_act": 6.3,
+        "encourage_the_heart": 4.8,
+        "overall": 5.2
+      }
     },
     "label": "reject"
   },
@@ -2824,7 +3136,15 @@
         "enable_others": 0.3,
         "encourage_heart": 0.4
       },
-      "fingerprint_reliable": true
+      "fingerprint_reliable": true,
+      "essay_nlp": {
+        "model_the_way": 4.8,
+        "inspire_shared_vision": 6.2,
+        "challenge_the_process": 3.2,
+        "enable_others_to_act": 5.2,
+        "encourage_the_heart": 2.8,
+        "overall": 4.4
+      }
     },
     "label": "reject"
   },
@@ -2932,7 +3252,15 @@
         "enable_others": 0.3,
         "encourage_heart": 0.3
       },
-      "fingerprint_reliable": true
+      "fingerprint_reliable": true,
+      "essay_nlp": {
+        "model_the_way": 3.5,
+        "inspire_shared_vision": 6.1,
+        "challenge_the_process": 7.0,
+        "enable_others_to_act": 5.5,
+        "encourage_the_heart": 3.6,
+        "overall": 5.1
+      }
     },
     "label": "reject"
   },
@@ -3157,7 +3485,15 @@
         "enable_others": 0.4,
         "encourage_heart": 0.4
       },
-      "fingerprint_reliable": true
+      "fingerprint_reliable": true,
+      "essay_nlp": {
+        "model_the_way": 4.9,
+        "inspire_shared_vision": 5.1,
+        "challenge_the_process": 4.3,
+        "enable_others_to_act": 5.4,
+        "encourage_the_heart": 1.9,
+        "overall": 4.3
+      }
     },
     "label": "reject"
   },
@@ -3214,7 +3550,15 @@
         "enable_others": 0.43,
         "encourage_heart": 0.28
       },
-      "fingerprint_reliable": true
+      "fingerprint_reliable": true,
+      "essay_nlp": {
+        "model_the_way": 3.8,
+        "inspire_shared_vision": 6.8,
+        "challenge_the_process": 8.8,
+        "enable_others_to_act": 9.0,
+        "encourage_the_heart": 5.0,
+        "overall": 6.7
+      }
     },
     "label": "maybe"
   },
@@ -3271,7 +3615,15 @@
         "enable_others": 0.35,
         "encourage_heart": 0.33
       },
-      "fingerprint_reliable": true
+      "fingerprint_reliable": true,
+      "essay_nlp": {
+        "model_the_way": 3.8,
+        "inspire_shared_vision": 6.8,
+        "challenge_the_process": 8.8,
+        "enable_others_to_act": 9.0,
+        "encourage_the_heart": 5.0,
+        "overall": 6.7
+      }
     },
     "label": "maybe"
   },
@@ -3328,7 +3680,15 @@
         "enable_others": 0.32,
         "encourage_heart": 0.4
       },
-      "fingerprint_reliable": true
+      "fingerprint_reliable": true,
+      "essay_nlp": {
+        "model_the_way": 3.8,
+        "inspire_shared_vision": 6.8,
+        "challenge_the_process": 8.8,
+        "enable_others_to_act": 9.0,
+        "encourage_the_heart": 5.0,
+        "overall": 6.7
+      }
     },
     "label": "maybe"
   },
@@ -3385,7 +3745,15 @@
         "enable_others": 0.48,
         "encourage_heart": 0.36
       },
-      "fingerprint_reliable": true
+      "fingerprint_reliable": true,
+      "essay_nlp": {
+        "model_the_way": 3.8,
+        "inspire_shared_vision": 6.8,
+        "challenge_the_process": 8.8,
+        "enable_others_to_act": 9.0,
+        "encourage_the_heart": 5.0,
+        "overall": 6.7
+      }
     },
     "label": "maybe"
   },
@@ -3442,7 +3810,15 @@
         "enable_others": 0.33,
         "encourage_heart": 0.31
       },
-      "fingerprint_reliable": true
+      "fingerprint_reliable": true,
+      "essay_nlp": {
+        "model_the_way": 3.8,
+        "inspire_shared_vision": 6.8,
+        "challenge_the_process": 8.8,
+        "enable_others_to_act": 9.0,
+        "encourage_the_heart": 5.0,
+        "overall": 6.7
+      }
     },
     "label": "maybe"
   },
@@ -3499,7 +3875,15 @@
         "enable_others": 0.49,
         "encourage_heart": 0.31
       },
-      "fingerprint_reliable": true
+      "fingerprint_reliable": true,
+      "essay_nlp": {
+        "model_the_way": 3.8,
+        "inspire_shared_vision": 6.8,
+        "challenge_the_process": 8.8,
+        "enable_others_to_act": 9.0,
+        "encourage_the_heart": 5.0,
+        "overall": 6.7
+      }
     },
     "label": "maybe"
   },
@@ -3556,7 +3940,15 @@
         "enable_others": 0.49,
         "encourage_heart": 0.48
       },
-      "fingerprint_reliable": true
+      "fingerprint_reliable": true,
+      "essay_nlp": {
+        "model_the_way": 3.8,
+        "inspire_shared_vision": 6.8,
+        "challenge_the_process": 8.8,
+        "enable_others_to_act": 9.0,
+        "encourage_the_heart": 5.0,
+        "overall": 6.7
+      }
     },
     "label": "maybe"
   },
@@ -3613,7 +4005,15 @@
         "enable_others": 0.33,
         "encourage_heart": 0.48
       },
-      "fingerprint_reliable": true
+      "fingerprint_reliable": true,
+      "essay_nlp": {
+        "model_the_way": 3.8,
+        "inspire_shared_vision": 6.8,
+        "challenge_the_process": 8.8,
+        "enable_others_to_act": 9.0,
+        "encourage_the_heart": 5.0,
+        "overall": 6.7
+      }
     },
     "label": "maybe"
   },
@@ -3670,7 +4070,15 @@
         "enable_others": 0.36,
         "encourage_heart": 0.26
       },
-      "fingerprint_reliable": true
+      "fingerprint_reliable": true,
+      "essay_nlp": {
+        "model_the_way": 3.8,
+        "inspire_shared_vision": 6.8,
+        "challenge_the_process": 8.8,
+        "enable_others_to_act": 9.0,
+        "encourage_the_heart": 5.0,
+        "overall": 6.7
+      }
     },
     "label": "maybe"
   },
@@ -3727,7 +4135,15 @@
         "enable_others": 0.43,
         "encourage_heart": 0.31
       },
-      "fingerprint_reliable": true
+      "fingerprint_reliable": true,
+      "essay_nlp": {
+        "model_the_way": 3.8,
+        "inspire_shared_vision": 6.8,
+        "challenge_the_process": 8.8,
+        "enable_others_to_act": 9.0,
+        "encourage_the_heart": 5.0,
+        "overall": 6.7
+      }
     },
     "label": "maybe"
   },
@@ -3804,7 +4220,15 @@
         "enable_others": 0.6,
         "encourage_heart": 0.5
       },
-      "fingerprint_reliable": true
+      "fingerprint_reliable": true,
+      "essay_nlp": {
+        "model_the_way": 2.4,
+        "inspire_shared_vision": 4.9,
+        "challenge_the_process": 7.1,
+        "enable_others_to_act": 4.1,
+        "encourage_the_heart": 1.3,
+        "overall": 4.0
+      }
     },
     "label": "shortlist"
   },
@@ -3875,7 +4299,15 @@
         "enable_others": 0.7,
         "encourage_heart": 0.4
       },
-      "fingerprint_reliable": true
+      "fingerprint_reliable": true,
+      "essay_nlp": {
+        "model_the_way": 0.0,
+        "inspire_shared_vision": 2.1,
+        "challenge_the_process": 4.4,
+        "enable_others_to_act": 3.4,
+        "encourage_the_heart": 1.2,
+        "overall": 2.2
+      }
     },
     "label": "shortlist"
   },
@@ -3945,7 +4377,15 @@
         "enable_others": 0.8,
         "encourage_heart": 0.7
       },
-      "fingerprint_reliable": true
+      "fingerprint_reliable": true,
+      "essay_nlp": {
+        "model_the_way": 0.7,
+        "inspire_shared_vision": 4.2,
+        "challenge_the_process": 3.6,
+        "enable_others_to_act": 3.0,
+        "encourage_the_heart": 0.3,
+        "overall": 2.4
+      }
     },
     "label": "shortlist"
   },
@@ -4023,7 +4463,15 @@
         "enable_others": 0.6,
         "encourage_heart": 0.4
       },
-      "fingerprint_reliable": true
+      "fingerprint_reliable": true,
+      "essay_nlp": {
+        "model_the_way": 1.9,
+        "inspire_shared_vision": 6.8,
+        "challenge_the_process": 5.3,
+        "enable_others_to_act": 6.1,
+        "encourage_the_heart": 3.3,
+        "overall": 4.7
+      }
     },
     "label": "shortlist"
   },
@@ -4094,7 +4542,15 @@
         "enable_others": 0.7,
         "encourage_heart": 0.6
       },
-      "fingerprint_reliable": true
+      "fingerprint_reliable": true,
+      "essay_nlp": {
+        "model_the_way": 0,
+        "inspire_shared_vision": 0,
+        "challenge_the_process": 0.8,
+        "enable_others_to_act": 0.2,
+        "encourage_the_heart": 0,
+        "overall": 0.2
+      }
     },
     "label": "shortlist"
   },
@@ -4165,7 +4621,15 @@
         "enable_others": 0.5,
         "encourage_heart": 0.5
       },
-      "fingerprint_reliable": true
+      "fingerprint_reliable": true,
+      "essay_nlp": {
+        "model_the_way": 0,
+        "inspire_shared_vision": 3.3,
+        "challenge_the_process": 2.8,
+        "enable_others_to_act": 3.0,
+        "encourage_the_heart": 0.4,
+        "overall": 1.9
+      }
     },
     "label": "shortlist"
   },
@@ -4236,7 +4700,15 @@
         "enable_others": 0.8,
         "encourage_heart": 0.6
       },
-      "fingerprint_reliable": true
+      "fingerprint_reliable": true,
+      "essay_nlp": {
+        "model_the_way": 0,
+        "inspire_shared_vision": 3.5,
+        "challenge_the_process": 6.6,
+        "enable_others_to_act": 2.2,
+        "encourage_the_heart": 0.4,
+        "overall": 2.5
+      }
     },
     "label": "shortlist"
   },
@@ -4313,7 +4785,15 @@
         "enable_others": 0.7,
         "encourage_heart": 0.5
       },
-      "fingerprint_reliable": true
+      "fingerprint_reliable": true,
+      "essay_nlp": {
+        "model_the_way": 0.3,
+        "inspire_shared_vision": 4.2,
+        "challenge_the_process": 3.1,
+        "enable_others_to_act": 2.9,
+        "encourage_the_heart": 1.7,
+        "overall": 2.4
+      }
     },
     "label": "shortlist"
   },
@@ -4377,7 +4857,15 @@
         "enable_others": 0.9,
         "encourage_heart": 0.7
       },
-      "fingerprint_reliable": true
+      "fingerprint_reliable": true,
+      "essay_nlp": {
+        "model_the_way": 0.1,
+        "inspire_shared_vision": 3.5,
+        "challenge_the_process": 4.4,
+        "enable_others_to_act": 3.5,
+        "encourage_the_heart": 1.6,
+        "overall": 2.6
+      }
     },
     "label": "shortlist"
   },
@@ -4455,7 +4943,15 @@
         "enable_others": 0.6,
         "encourage_heart": 0.7
       },
-      "fingerprint_reliable": true
+      "fingerprint_reliable": true,
+      "essay_nlp": {
+        "model_the_way": 0,
+        "inspire_shared_vision": 2.6,
+        "challenge_the_process": 7.0,
+        "enable_others_to_act": 3.2,
+        "encourage_the_heart": 1.3,
+        "overall": 2.8
+      }
     },
     "label": "shortlist"
   },
@@ -4526,7 +5022,15 @@
         "enable_others": 0.8,
         "encourage_heart": 0.8
       },
-      "fingerprint_reliable": true
+      "fingerprint_reliable": true,
+      "essay_nlp": {
+        "model_the_way": 1.1,
+        "inspire_shared_vision": 3.1,
+        "challenge_the_process": 4.4,
+        "enable_others_to_act": 3.7,
+        "encourage_the_heart": 1.7,
+        "overall": 2.8
+      }
     },
     "label": "shortlist"
   },
@@ -4602,7 +5106,15 @@
         "enable_others": 0.7,
         "encourage_heart": 0.5
       },
-      "fingerprint_reliable": true
+      "fingerprint_reliable": true,
+      "essay_nlp": {
+        "model_the_way": 0,
+        "inspire_shared_vision": 0.6,
+        "challenge_the_process": 1.8,
+        "enable_others_to_act": 0,
+        "encourage_the_heart": 0,
+        "overall": 0.5
+      }
     },
     "label": "shortlist"
   },
@@ -4673,7 +5185,15 @@
         "enable_others": 0.6,
         "encourage_heart": 0.6
       },
-      "fingerprint_reliable": true
+      "fingerprint_reliable": true,
+      "essay_nlp": {
+        "model_the_way": 0,
+        "inspire_shared_vision": 3.4,
+        "challenge_the_process": 4.2,
+        "enable_others_to_act": 3.7,
+        "encourage_the_heart": 1.6,
+        "overall": 2.6
+      }
     },
     "label": "shortlist"
   },
@@ -4743,7 +5263,15 @@
         "enable_others": 0.6,
         "encourage_heart": 0.5
       },
-      "fingerprint_reliable": true
+      "fingerprint_reliable": true,
+      "essay_nlp": {
+        "model_the_way": 0.4,
+        "inspire_shared_vision": 6.0,
+        "challenge_the_process": 5.2,
+        "enable_others_to_act": 5.0,
+        "encourage_the_heart": 3.0,
+        "overall": 3.9
+      }
     },
     "label": "shortlist"
   },
@@ -4820,7 +5348,15 @@
         "enable_others": 0.6,
         "encourage_heart": 0.4
       },
-      "fingerprint_reliable": true
+      "fingerprint_reliable": true,
+      "essay_nlp": {
+        "model_the_way": 0,
+        "inspire_shared_vision": 2.0,
+        "challenge_the_process": 4.1,
+        "enable_others_to_act": 1.3,
+        "encourage_the_heart": 0,
+        "overall": 1.5
+      }
     },
     "label": "shortlist"
   },
@@ -4885,7 +5421,15 @@
         "enable_others": 0.7,
         "encourage_heart": 0.7
       },
-      "fingerprint_reliable": true
+      "fingerprint_reliable": true,
+      "essay_nlp": {
+        "model_the_way": 0,
+        "inspire_shared_vision": 5.0,
+        "challenge_the_process": 4.8,
+        "enable_others_to_act": 5.2,
+        "encourage_the_heart": 1.2,
+        "overall": 3.2
+      }
     },
     "label": "shortlist"
   },
@@ -4961,7 +5505,15 @@
         "enable_others": 0.7,
         "encourage_heart": 0.6
       },
-      "fingerprint_reliable": true
+      "fingerprint_reliable": true,
+      "essay_nlp": {
+        "model_the_way": 0,
+        "inspire_shared_vision": 3.4,
+        "challenge_the_process": 4.7,
+        "enable_others_to_act": 1.4,
+        "encourage_the_heart": 0,
+        "overall": 1.9
+      }
     },
     "label": "shortlist"
   },
@@ -5033,7 +5585,15 @@
         "enable_others": 0.6,
         "encourage_heart": 0.7
       },
-      "fingerprint_reliable": true
+      "fingerprint_reliable": true,
+      "essay_nlp": {
+        "model_the_way": 0,
+        "inspire_shared_vision": 4.7,
+        "challenge_the_process": 4.2,
+        "enable_others_to_act": 3.1,
+        "encourage_the_heart": 0.9,
+        "overall": 2.6
+      }
     },
     "label": "shortlist"
   },
@@ -5104,7 +5664,15 @@
         "enable_others": 0.7,
         "encourage_heart": 0.5
       },
-      "fingerprint_reliable": true
+      "fingerprint_reliable": true,
+      "essay_nlp": {
+        "model_the_way": 0,
+        "inspire_shared_vision": 2.6,
+        "challenge_the_process": 5.6,
+        "enable_others_to_act": 2.4,
+        "encourage_the_heart": 0.2,
+        "overall": 2.2
+      }
     },
     "label": "shortlist"
   },
@@ -5175,7 +5743,15 @@
         "enable_others": 0.6,
         "encourage_heart": 0.5
       },
-      "fingerprint_reliable": true
+      "fingerprint_reliable": true,
+      "essay_nlp": {
+        "model_the_way": 0.3,
+        "inspire_shared_vision": 3.3,
+        "challenge_the_process": 2.9,
+        "enable_others_to_act": 1.9,
+        "encourage_the_heart": 1.5,
+        "overall": 2.0
+      }
     },
     "label": "shortlist"
   },
@@ -5239,7 +5815,15 @@
         "enable_others": 0.8,
         "encourage_heart": 0.6
       },
-      "fingerprint_reliable": true
+      "fingerprint_reliable": true,
+      "essay_nlp": {
+        "model_the_way": 1.3,
+        "inspire_shared_vision": 4.5,
+        "challenge_the_process": 5.5,
+        "enable_others_to_act": 3.0,
+        "encourage_the_heart": 1.0,
+        "overall": 3.1
+      }
     },
     "label": "maybe"
   },
@@ -5310,7 +5894,15 @@
         "enable_others": 0.6,
         "encourage_heart": 0.5
       },
-      "fingerprint_reliable": true
+      "fingerprint_reliable": true,
+      "essay_nlp": {
+        "model_the_way": 0,
+        "inspire_shared_vision": 2.4,
+        "challenge_the_process": 9.1,
+        "enable_others_to_act": 4.2,
+        "encourage_the_heart": 0,
+        "overall": 3.1
+      }
     },
     "label": "maybe"
   },
@@ -5374,7 +5966,15 @@
         "enable_others": 0.7,
         "encourage_heart": 0.5
       },
-      "fingerprint_reliable": true
+      "fingerprint_reliable": true,
+      "essay_nlp": {
+        "model_the_way": 0,
+        "inspire_shared_vision": 1.3,
+        "challenge_the_process": 3.3,
+        "enable_others_to_act": 1.7,
+        "encourage_the_heart": 0,
+        "overall": 1.3
+      }
     },
     "label": "maybe"
   },
@@ -5439,7 +6039,15 @@
         "enable_others": 0.7,
         "encourage_heart": 0.6
       },
-      "fingerprint_reliable": true
+      "fingerprint_reliable": true,
+      "essay_nlp": {
+        "model_the_way": 3.1,
+        "inspire_shared_vision": 4.2,
+        "challenge_the_process": 5.2,
+        "enable_others_to_act": 3.5,
+        "encourage_the_heart": 1.7,
+        "overall": 3.5
+      }
     },
     "label": "maybe"
   },
@@ -5503,7 +6111,15 @@
         "enable_others": 0.7,
         "encourage_heart": 0.5
       },
-      "fingerprint_reliable": true
+      "fingerprint_reliable": true,
+      "essay_nlp": {
+        "model_the_way": 3.2,
+        "inspire_shared_vision": 5.4,
+        "challenge_the_process": 4.6,
+        "enable_others_to_act": 3.6,
+        "encourage_the_heart": 1.8,
+        "overall": 3.7
+      }
     },
     "label": "maybe"
   },
@@ -5574,7 +6190,15 @@
         "enable_others": 0.7,
         "encourage_heart": 0.7
       },
-      "fingerprint_reliable": true
+      "fingerprint_reliable": true,
+      "essay_nlp": {
+        "model_the_way": 1.3,
+        "inspire_shared_vision": 5.0,
+        "challenge_the_process": 2.5,
+        "enable_others_to_act": 2.4,
+        "encourage_the_heart": 0.3,
+        "overall": 2.3
+      }
     },
     "label": "maybe"
   },
@@ -5631,7 +6255,15 @@
         "enable_others": 0.7,
         "encourage_heart": 0.6
       },
-      "fingerprint_reliable": true
+      "fingerprint_reliable": true,
+      "essay_nlp": {
+        "model_the_way": 0,
+        "inspire_shared_vision": 3.8,
+        "challenge_the_process": 4.1,
+        "enable_others_to_act": 3.0,
+        "encourage_the_heart": 0.4,
+        "overall": 2.3
+      }
     },
     "label": "maybe"
   },
@@ -5696,7 +6328,15 @@
         "enable_others": 0.7,
         "encourage_heart": 0.6
       },
-      "fingerprint_reliable": true
+      "fingerprint_reliable": true,
+      "essay_nlp": {
+        "model_the_way": 0.2,
+        "inspire_shared_vision": 4.0,
+        "challenge_the_process": 4.1,
+        "enable_others_to_act": 3.0,
+        "encourage_the_heart": 0,
+        "overall": 2.3
+      }
     },
     "label": "maybe"
   },
@@ -5766,7 +6406,15 @@
         "enable_others": 0.6,
         "encourage_heart": 0.5
       },
-      "fingerprint_reliable": true
+      "fingerprint_reliable": true,
+      "essay_nlp": {
+        "model_the_way": 0,
+        "inspire_shared_vision": 4.4,
+        "challenge_the_process": 4.6,
+        "enable_others_to_act": 4.8,
+        "encourage_the_heart": 3.2,
+        "overall": 3.4
+      }
     },
     "label": "maybe"
   },
@@ -5824,7 +6472,15 @@
         "enable_others": 0.6,
         "encourage_heart": 0.6
       },
-      "fingerprint_reliable": true
+      "fingerprint_reliable": true,
+      "essay_nlp": {
+        "model_the_way": 2.3,
+        "inspire_shared_vision": 3.9,
+        "challenge_the_process": 5.5,
+        "enable_others_to_act": 3.9,
+        "encourage_the_heart": 5.0,
+        "overall": 4.1
+      }
     },
     "label": "maybe"
   },
@@ -5888,7 +6544,15 @@
         "enable_others": 0.7,
         "encourage_heart": 0.5
       },
-      "fingerprint_reliable": true
+      "fingerprint_reliable": true,
+      "essay_nlp": {
+        "model_the_way": 1.3,
+        "inspire_shared_vision": 4.6,
+        "challenge_the_process": 4.6,
+        "enable_others_to_act": 3.0,
+        "encourage_the_heart": 0.0,
+        "overall": 2.7
+      }
     },
     "label": "maybe"
   },
@@ -5953,7 +6617,15 @@
         "enable_others": 0.6,
         "encourage_heart": 0.7
       },
-      "fingerprint_reliable": true
+      "fingerprint_reliable": true,
+      "essay_nlp": {
+        "model_the_way": 1.0,
+        "inspire_shared_vision": 2.9,
+        "challenge_the_process": 4.1,
+        "enable_others_to_act": 2.6,
+        "encourage_the_heart": 0.2,
+        "overall": 2.2
+      }
     },
     "label": "maybe"
   },
@@ -6010,7 +6682,15 @@
         "enable_others": 0.6,
         "encourage_heart": 0.5
       },
-      "fingerprint_reliable": true
+      "fingerprint_reliable": true,
+      "essay_nlp": {
+        "model_the_way": 2.3,
+        "inspire_shared_vision": 4.2,
+        "challenge_the_process": 3.8,
+        "enable_others_to_act": 2.5,
+        "encourage_the_heart": 0,
+        "overall": 2.6
+      }
     },
     "label": "maybe"
   },
@@ -6074,7 +6754,15 @@
         "enable_others": 0.6,
         "encourage_heart": 0.6
       },
-      "fingerprint_reliable": true
+      "fingerprint_reliable": true,
+      "essay_nlp": {
+        "model_the_way": 0.3,
+        "inspire_shared_vision": 4.2,
+        "challenge_the_process": 2.9,
+        "enable_others_to_act": 2.9,
+        "encourage_the_heart": 1.0,
+        "overall": 2.3
+      }
     },
     "label": "maybe"
   },
@@ -6137,7 +6825,15 @@
         "enable_others": 0.7,
         "encourage_heart": 0.5
       },
-      "fingerprint_reliable": true
+      "fingerprint_reliable": true,
+      "essay_nlp": {
+        "model_the_way": 2.7,
+        "inspire_shared_vision": 5.8,
+        "challenge_the_process": 2.6,
+        "enable_others_to_act": 5.2,
+        "encourage_the_heart": 1.8,
+        "overall": 3.6
+      }
     },
     "label": "maybe"
   },
@@ -6187,7 +6883,15 @@
         "enable_others": 0.6,
         "encourage_heart": 0.7
       },
-      "fingerprint_reliable": true
+      "fingerprint_reliable": true,
+      "essay_nlp": {
+        "model_the_way": 3.8,
+        "inspire_shared_vision": 7.2,
+        "challenge_the_process": 3.8,
+        "enable_others_to_act": 5.0,
+        "encourage_the_heart": 8.7,
+        "overall": 5.7
+      }
     },
     "label": "maybe"
   },
@@ -6245,7 +6949,15 @@
         "enable_others": 0.5,
         "encourage_heart": 0.4
       },
-      "fingerprint_reliable": true
+      "fingerprint_reliable": true,
+      "essay_nlp": {
+        "model_the_way": 0,
+        "inspire_shared_vision": 5.0,
+        "challenge_the_process": 6.0,
+        "enable_others_to_act": 2.7,
+        "encourage_the_heart": 1.7,
+        "overall": 3.1
+      }
     },
     "label": "maybe"
   },
@@ -6302,7 +7014,15 @@
         "enable_others": 0.4,
         "encourage_heart": 0.4
       },
-      "fingerprint_reliable": true
+      "fingerprint_reliable": true,
+      "essay_nlp": {
+        "model_the_way": 0.3,
+        "inspire_shared_vision": 2.7,
+        "challenge_the_process": 3.2,
+        "enable_others_to_act": 2.2,
+        "encourage_the_heart": 1.5,
+        "overall": 2.0
+      }
     },
     "label": "maybe"
   },
@@ -6352,7 +7072,15 @@
         "enable_others": 0.4,
         "encourage_heart": 0.4
       },
-      "fingerprint_reliable": false
+      "fingerprint_reliable": false,
+      "essay_nlp": {
+        "model_the_way": 4.5,
+        "inspire_shared_vision": 8.2,
+        "challenge_the_process": 6.1,
+        "enable_others_to_act": 6.2,
+        "encourage_the_heart": 5.3,
+        "overall": 6.1
+      }
     },
     "label": "maybe"
   },
@@ -6416,7 +7144,15 @@
         "enable_others": 0.5,
         "encourage_heart": 0.5
       },
-      "fingerprint_reliable": true
+      "fingerprint_reliable": true,
+      "essay_nlp": {
+        "model_the_way": 2.6,
+        "inspire_shared_vision": 4.9,
+        "challenge_the_process": 5.8,
+        "enable_others_to_act": 6.3,
+        "encourage_the_heart": 1.6,
+        "overall": 4.2
+      }
     },
     "label": "maybe"
   },
@@ -6473,7 +7209,15 @@
         "enable_others": 0.5,
         "encourage_heart": 0.4
       },
-      "fingerprint_reliable": true
+      "fingerprint_reliable": true,
+      "essay_nlp": {
+        "model_the_way": 2.3,
+        "inspire_shared_vision": 5.8,
+        "challenge_the_process": 5.3,
+        "enable_others_to_act": 6.1,
+        "encourage_the_heart": 6.2,
+        "overall": 5.1
+      }
     },
     "label": "reject"
   },
@@ -6523,7 +7267,15 @@
         "enable_others": 0.4,
         "encourage_heart": 0.5
       },
-      "fingerprint_reliable": true
+      "fingerprint_reliable": true,
+      "essay_nlp": {
+        "model_the_way": 2.0,
+        "inspire_shared_vision": 5.3,
+        "challenge_the_process": 3.9,
+        "enable_others_to_act": 3.7,
+        "encourage_the_heart": 2.6,
+        "overall": 3.5
+      }
     },
     "label": "reject"
   },
@@ -6573,7 +7325,15 @@
         "enable_others": 0.4,
         "encourage_heart": 0.3
       },
-      "fingerprint_reliable": false
+      "fingerprint_reliable": false,
+      "essay_nlp": {
+        "model_the_way": 0,
+        "inspire_shared_vision": 3.4,
+        "challenge_the_process": 6.0,
+        "enable_others_to_act": 2.9,
+        "encourage_the_heart": 1.7,
+        "overall": 2.8
+      }
     },
     "label": "reject"
   },
@@ -6630,7 +7390,15 @@
         "enable_others": 0.5,
         "encourage_heart": 0.4
       },
-      "fingerprint_reliable": true
+      "fingerprint_reliable": true,
+      "essay_nlp": {
+        "model_the_way": 2.7,
+        "inspire_shared_vision": 4.7,
+        "challenge_the_process": 4.3,
+        "enable_others_to_act": 6.6,
+        "encourage_the_heart": 2.3,
+        "overall": 4.1
+      }
     },
     "label": "reject"
   },
@@ -6687,7 +7455,15 @@
         "enable_others": 0.5,
         "encourage_heart": 0.5
       },
-      "fingerprint_reliable": true
+      "fingerprint_reliable": true,
+      "essay_nlp": {
+        "model_the_way": 1.8,
+        "inspire_shared_vision": 4.5,
+        "challenge_the_process": 2.6,
+        "enable_others_to_act": 2.4,
+        "encourage_the_heart": 0,
+        "overall": 2.3
+      }
     },
     "label": "reject"
   },
@@ -6744,7 +7520,15 @@
         "enable_others": 0.5,
         "encourage_heart": 0.5
       },
-      "fingerprint_reliable": true
+      "fingerprint_reliable": true,
+      "essay_nlp": {
+        "model_the_way": 0.3,
+        "inspire_shared_vision": 4.5,
+        "challenge_the_process": 5.4,
+        "enable_others_to_act": 3.4,
+        "encourage_the_heart": 0.4,
+        "overall": 2.8
+      }
     },
     "label": "reject"
   },
@@ -6794,7 +7578,15 @@
         "enable_others": 0.4,
         "encourage_heart": 0.3
       },
-      "fingerprint_reliable": false
+      "fingerprint_reliable": false,
+      "essay_nlp": {
+        "model_the_way": 0.2,
+        "inspire_shared_vision": 3.4,
+        "challenge_the_process": 5.0,
+        "enable_others_to_act": 3.3,
+        "encourage_the_heart": 2.1,
+        "overall": 2.8
+      }
     },
     "label": "reject"
   },
@@ -6851,7 +7643,15 @@
         "enable_others": 0.5,
         "encourage_heart": 0.5
       },
-      "fingerprint_reliable": true
+      "fingerprint_reliable": true,
+      "essay_nlp": {
+        "model_the_way": 0,
+        "inspire_shared_vision": 3.3,
+        "challenge_the_process": 4.4,
+        "enable_others_to_act": 0.8,
+        "encourage_the_heart": 0,
+        "overall": 1.7
+      }
     },
     "label": "reject"
   },
@@ -6901,7 +7701,15 @@
         "enable_others": 0.4,
         "encourage_heart": 0.4
       },
-      "fingerprint_reliable": false
+      "fingerprint_reliable": false,
+      "essay_nlp": {
+        "model_the_way": 0.5,
+        "inspire_shared_vision": 3.7,
+        "challenge_the_process": 3.4,
+        "enable_others_to_act": 3.8,
+        "encourage_the_heart": 0.4,
+        "overall": 2.4
+      }
     },
     "label": "reject"
   },
@@ -6959,7 +7767,15 @@
         "enable_others": 0.5,
         "encourage_heart": 0.4
       },
-      "fingerprint_reliable": true
+      "fingerprint_reliable": true,
+      "essay_nlp": {
+        "model_the_way": 1.2,
+        "inspire_shared_vision": 5.7,
+        "challenge_the_process": 3.3,
+        "enable_others_to_act": 3.6,
+        "encourage_the_heart": 1.0,
+        "overall": 3.0
+      }
     },
     "label": "reject"
   }
