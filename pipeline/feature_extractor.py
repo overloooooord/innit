@@ -33,13 +33,14 @@ def extract_essay_features(candidate: Dict[str, Any]) -> np.ndarray:
             f"candidate {candidate.get('user_id', '?')} has no bot_metadata.essay_nlp — "
             "NLP must be computed in the bot before scoring"
         )
+    scores = nlp.get("scores", nlp)
     return np.array([
-        nlp["model_the_way"]         / 10.0,
-        nlp["inspire_shared_vision"] / 10.0,
-        nlp["challenge_the_process"] / 10.0,
-        nlp["enable_others_to_act"]  / 10.0,
-        nlp["encourage_the_heart"]   / 10.0,
-        nlp["overall"]               / 10.0,
+        scores.get("model_the_way", 5.0)         / 10.0,
+        scores.get("inspire_shared_vision", 5.0) / 10.0,
+        scores.get("challenge_the_process", 5.0) / 10.0,
+        scores.get("enable_others_to_act", 5.0)  / 10.0,
+        scores.get("encourage_the_heart", 5.0)   / 10.0,
+        scores.get("overall", 5.0)               / 10.0,
     ], dtype=np.float32)
 def extract_batch(candidates: List[Dict[str, Any]]) -> np.ndarray:
     return np.array([extract_features(c) for c in candidates], dtype=np.float32)

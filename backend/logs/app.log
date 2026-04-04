@@ -257,3 +257,8 @@
 [2026-04-05 03:45:06,307] ERROR candidates — Ошибка скоринга заявки #6: 'candidate ? has no bot_metadata.essay_nlp — NLP must be computed in the bot before scoring'
 [2026-04-05 03:45:33,180] INFO candidates — Выход из админ-панели
 [2026-04-05 03:45:36,188] INFO candidates — Вход в кабинет учителя: teacher1 (Елена Николаевна)
+[2026-04-05 03:48:24,019] INFO candidates.ml_service — Loading ML model from /home/caterinw/Indrive-AI/pipeline/models/model.pkl
+[2026-04-05 03:48:26,127] INFO candidates.ml_service — ML model loaded successfully
+[2026-04-05 03:48:26,133] ERROR candidates — Ошибка скоринга заявки #6: 'model_the_way'
+[2026-04-05 03:49:07,130] ERROR candidates — Ошибка скоринга заявки #6: 'model_the_way'
+[2026-04-05 03:49:13,783] ERROR candidates — Ошибка скоринга заявки #6: 'model_the_way'
