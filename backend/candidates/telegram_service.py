@@ -60,7 +60,7 @@ def notify_new_candidate(candidate):
 def _escape_md(text: str) -> str:
     if not text:
         return '—'
-    for char in ('_', '*', '[', ']', '(', ')', '~', '`', '>', '
+    for char in ('_', '*', '[', ']', '(', ')', '~', '`', '>', '#', '+', '-', '=', '|', '{', '}', '.', '!'):
         text = text.replace(char, f'\\{char}')
     return text
 def _send_message(token: str, chat_id: int, text: str):
