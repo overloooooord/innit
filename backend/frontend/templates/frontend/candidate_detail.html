@@ -1,6 +1,5 @@
 {% extends "frontend/base.html" %}
 {% block title %}Кандидат — InVision U{% endblock %}
-
 {% block content %}
 <div class="page-header" style="display:flex;justify-content:space-between;align-items:center;">
     <div>
@@ -12,16 +11,13 @@
         <a href="/" class="btn btn-secondary">← Назад</a>
     </div>
 </div>
-
 <div class="detail-grid" id="detailGrid">
     <div class="loading full-width"><div class="spinner"></div>Загрузка данных...</div>
 </div>
 {% endblock %}
-
 {% block scripts %}
 <script>
 const CANDIDATE_ID = {{ candidate_id }};
-
 async function loadCandidate() {
     try {
         const data = await api(`/api/candidates/${CANDIDATE_ID}/`);
@@ -30,12 +26,10 @@ async function loadCandidate() {
         showToast(e.message, 'error');
     }
 }
-
 function renderDetail(c) {
     document.getElementById('candidateName').textContent = c.name;
     document.getElementById('candidateMeta').textContent =
         `${c.city || '—'}, ${c.age} лет · ${c.school_type || '—'} · ${c.has_mentor ? 'Есть ментор' : 'Нет ментора'}`;
-
     const edu = c.profile_data.education || {};
     const exp = c.profile_data.experience || {};
     const essay = c.profile_data.essay || {};
@@ -43,9 +37,7 @@ function renderDetail(c) {
     const projects = exp.projects || [];
     const olympiads = edu.olympiads || [];
     const courses = edu.courses || [];
-
     let html = '';
-
     // Personal info card
     html += `
     <div class="card">
@@ -57,7 +49,6 @@ function renderDetail(c) {
         <div class="stat-row"><span class="stat-label">Тип школы</span><span class="stat-value">${esc(c.school_type || '—')}</span></div>
         <div class="stat-row"><span class="stat-label">Ментор</span><span class="stat-value">${c.has_mentor ? '✅ Есть' : '❌ Нет'}</span></div>
     </div>`;
-
     // Education card
     html += `
     <div class="card">
@@ -68,7 +59,6 @@ function renderDetail(c) {
         ${olympiads.length ? '<div style="margin-top:12px;font-size:0.85rem;color:var(--text-secondary)"><strong>Олимпиады:</strong></div>' +
             olympiads.map(o => `<div class="stat-row"><span class="stat-label">${esc(o.subject)} (${o.level})</span><span class="stat-value badge ${o.result === 'prize' ? 'badge-shortlist' : 'badge-pending'}">${o.result}</span></div>`).join('') : ''}
     </div>`;
-
     // Scoring card (if scored)
     if (scoring) {
         const r = scoring.full_result;
@@ -91,7 +81,6 @@ function renderDetail(c) {
                 </div>
             `).join('')}
         </div>`;
-
         // Radar chart
         if (r && r.radar) {
             html += `
@@ -102,7 +91,6 @@ function renderDetail(c) {
                 </div>
             </div>`;
         }
-
         // Explanation
         if (r && r.explanation) {
             html += `
@@ -131,7 +119,6 @@ function renderDetail(c) {
                 `).join('')}
             </div>`;
         }
-
         // Flags
         if (r && r.flags) {
             html += `
@@ -155,7 +142,6 @@ function renderDetail(c) {
             </div>
         </div>`;
     }
-
     // Projects
     if (projects.length) {
         html += `
@@ -173,7 +159,6 @@ function renderDetail(c) {
             `).join('')}
         </div>`;
     }
-
     // Timeline
     if (scoring && scoring.full_result && scoring.full_result.trajectory && scoring.full_result.trajectory.length) {
         html += `
@@ -190,7 +175,6 @@ function renderDetail(c) {
             </div>
         </div>`;
     }
-
     // Essay
     if (essay.text) {
         html += `
@@ -200,7 +184,6 @@ function renderDetail(c) {
             <div style="margin-top:10px;font-size:0.8rem;color:var(--text-muted)">${essay.word_count || '?'} слов</div>
         </div>`;
     }
-
     // Motivation
     const motivation = c.profile_data.motivation || {};
     if (motivation.text) {
@@ -210,15 +193,12 @@ function renderDetail(c) {
             <p style="font-size:0.9rem;line-height:1.8;color:var(--text-secondary)">${esc(motivation.text)}</p>
         </div>`;
     }
-
     document.getElementById('detailGrid').innerHTML = html;
-
     // Draw radar chart if scored
     if (scoring && scoring.full_result && scoring.full_result.radar) {
         setTimeout(() => drawRadar(scoring.full_result.radar), 100);
     }
 }
-
 // Radar chart using Canvas
 function drawRadar(data) {
     const canvas = document.getElementById('radarCanvas');
@@ -229,9 +209,7 @@ function drawRadar(data) {
     const values = Object.values(data);
     const n = labels.length;
     const maxVal = 5;
-
     ctx.clearRect(0, 0, 300, 300);
-
     // Draw grid
     for (let level = 1; level <= 5; level++) {
         ctx.beginPath();
@@ -247,7 +225,6 @@ function drawRadar(data) {
         ctx.lineWidth = 1;
         ctx.stroke();
     }
-
     // Draw axes
     for (let i = 0; i < n; i++) {
         const angle = (Math.PI * 2 * i) / n - Math.PI / 2;
@@ -257,7 +234,6 @@ function drawRadar(data) {
         ctx.strokeStyle = 'rgba(42, 53, 80, 0.4)';
         ctx.stroke();
     }
-
     // Draw data polygon
     ctx.beginPath();
     for (let i = 0; i <= n; i++) {
@@ -274,19 +250,16 @@ function drawRadar(data) {
     ctx.strokeStyle = '#6366f1';
     ctx.lineWidth = 2;
     ctx.stroke();
-
     // Draw points and labels
     for (let i = 0; i < n; i++) {
         const angle = (Math.PI * 2 * i) / n - Math.PI / 2;
         const vr = (r * values[i]) / maxVal;
         const x = cx + vr * Math.cos(angle);
         const y = cy + vr * Math.sin(angle);
-
         ctx.beginPath();
         ctx.arc(x, y, 4, 0, Math.PI * 2);
         ctx.fillStyle = '#6366f1';
         ctx.fill();
-
         // Label
         const lx = cx + (r + 20) * Math.cos(angle);
         const ly = cy + (r + 20) * Math.sin(angle);
@@ -297,7 +270,6 @@ function drawRadar(data) {
         ctx.fillText(`${labels[i]} (${values[i]})`, lx, ly);
     }
 }
-
 async function runScore() {
     try {
         document.getElementById('btnScore').disabled = true;
@@ -314,21 +286,18 @@ async function runScore() {
         document.getElementById('btnScore').innerHTML = '🤖 Оценить кандидата';
     }
 }
-
 function predBadge(pred) {
     if (!pred) return '<span class="badge badge-pending">Не оценён</span>';
     const cls = { shortlist: 'badge-shortlist', maybe: 'badge-maybe', reject: 'badge-reject' };
     const labels = { shortlist: 'Shortlist', maybe: 'Maybe', reject: 'Reject' };
     return `<span class="badge ${cls[pred] || ''}">${labels[pred] || pred}</span>`;
 }
-
 function esc(s) {
     if (!s) return '';
     const d = document.createElement('div');
     d.textContent = s;
     return d.innerHTML;
 }
-
 loadCandidate();
 </script>
 {% endblock %}

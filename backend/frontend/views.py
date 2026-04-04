@@ -1,129 +1,99 @@
 """
 views.py — Frontend views (страницы, не API).
-
-Как это работает:
-  Эти views отдают HTML-страницы (шаблоны Django).
-  API endpoints (JSON) — в candidates/views.py.
-
-  panel_login():
-    Проверяет пароль через bcrypt.checkpw() — пароль
-    НИКОГДА не хранится в открытом виде. Хеш берётся из .env.
 """
-
 import bcrypt
 import logging
-
 from django.shortcuts import render, redirect
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.conf import settings
 import json
-
-
 logger = logging.getLogger('candidates')
-
-
 def index(request):
-    """Главная страница: список кандидатов."""
+    """Главная страница."""
     return render(request, 'frontend/index.html')
-
-
 def register(request):
     """Страница регистрации кандидата."""
     return render(request, 'frontend/register.html')
-
-
 def candidate_detail(request, pk):
     """Страница деталей кандидата."""
     return render(request, 'frontend/candidate_detail.html', {'candidate_id': pk})
-
-
 def panel_view(request):
     """
-    Админ-панель — доступ ТОЛЬКО с сессией.
-    Если нет panel_auth в сессии → редирект на страницу логина.
+    Админ-панель — доступ ТОЛЬКО с admin-сессией.
     """
     if not request.session.get('panel_auth'):
         return redirect('panel-login-page')
     return render(request, 'frontend/admin_panel.html')
-
-
 def panel_login_page(request):
-    """Показать страницу логина (если ещё не залогинен → показать форму)."""
+    """Страница логина (общая для admin и teachers)."""
     if request.session.get('panel_auth'):
         return redirect('panel')
+    if request.session.get('teacher_auth'):
+        return redirect('teacher-panel')
     return render(request, 'frontend/login.html')
-
-
 @csrf_exempt
 def panel_login(request):
     """
-    POST — обработка логина админа.
-
-    Безопасность:
-      1. Логин/пароль НЕ сравниваются с БД → никакого SQL вообще
-      2. Пароль проверяется через bcrypt.checkpw() vs хеш из .env
-      3. Никаких plaintext паролей ни в коде, ни в settings
-
-    Логин: era
-    Пароль: admin1 (хранится как bcrypt хеш)
+    POST — обработка логина.
+    Если admin credentials → сессия panel_auth → /panel/
+    Если teacher credentials → сессия teacher_auth → /teacher/
     """
     if request.method != 'POST':
         return JsonResponse({'error': 'Method not allowed'}, status=405)
-
     try:
         data = json.loads(request.body)
     except (json.JSONDecodeError, ValueError):
         return JsonResponse({'error': 'Invalid JSON'}, status=400)
-
     username = str(data.get('username', '')).strip()
     password = str(data.get('password', '')).strip()
-
-    expected_user = getattr(settings, 'PANEL_USERNAME', 'era')
+    expected_user = getattr(settings, 'PANEL_USERNAME', 'admin')
     password_hash = getattr(settings, 'PANEL_PASSWORD_HASH', '')
-
-    # Проверка username
-    if username != expected_user:
-        logger.warning(f"Неудачная попытка входа в панель: username={username}")
-        return JsonResponse(
-            {'success': False, 'error': 'Неверный логин или пароль'},
-            status=401,
-        )
-
-    # Проверка пароля через bcrypt
-    if not password_hash:
-        logger.error("PANEL_PASSWORD_HASH не настроен в .env!")
-        return JsonResponse(
-            {'success': False, 'error': 'Сервер не настроен'},
-            status=500,
-        )
-
-    try:
-        password_valid = bcrypt.checkpw(
-            password.encode('utf-8'),
-            password_hash.encode('utf-8'),
-        )
-    except Exception as e:
-        logger.error(f"Ошибка проверки bcrypt: {e}")
-        return JsonResponse(
-            {'success': False, 'error': 'Ошибка сервера'},
-            status=500,
-        )
-
-    if password_valid:
-        request.session['panel_auth'] = True
-        logger.info(f"Успешный вход в админ-панель: {username}")
-        return JsonResponse({'success': True})
-    else:
-        logger.warning(f"Неверный пароль для {username}")
-        return JsonResponse(
-            {'success': False, 'error': 'Неверный логин или пароль'},
-            status=401,
-        )
-
-
+    if username == expected_user and password_hash:
+        try:
+            if bcrypt.checkpw(password.encode('utf-8'), password_hash.encode('utf-8')):
+                request.session['panel_auth'] = True
+                logger.info(f"Вход в админ-панель: {username}")
+                return JsonResponse({'success': True, 'redirect': '/panel/'})
+        except Exception as e:
+            logger.error(f"Ошибка bcrypt admin: {e}")
+    teachers = getattr(settings, 'TEACHERS', {})
+    if username in teachers:
+        teacher = teachers[username]
+        teacher_hash = teacher.get('password_hash', '')
+        try:
+            if teacher_hash and bcrypt.checkpw(password.encode('utf-8'), teacher_hash.encode('utf-8')):
+                request.session['teacher_auth'] = username
+                request.session['teacher_name'] = teacher.get('name', username)
+                logger.info(f"Вход в кабинет учителя: {username} ({teacher.get('name', '')})")
+                return JsonResponse({'success': True, 'redirect': '/teacher/'})
+        except Exception as e:
+            logger.error(f"Ошибка bcrypt teacher {username}: {e}")
+    logger.warning(f"Неудачная попытка входа: username={username}")
+    return JsonResponse(
+        {'success': False, 'error': 'Неверный логин или пароль'},
+        status=401,
+    )
 def panel_logout(request):
-    """Выход из админ-панели: удаляем сессию."""
+    """Выход из админ-панели."""
     request.session.pop('panel_auth', None)
     logger.info("Выход из админ-панели")
+    return redirect('panel-login-page')
+def teacher_view(request):
+    """
+    Кабинет учителя — доступ ТОЛЬКО с teacher-сессией.
+    """
+    if not request.session.get('teacher_auth'):
+        return redirect('panel-login-page')
+    teacher_login = request.session['teacher_auth']
+    teacher_name = request.session.get('teacher_name', teacher_login)
+    return render(request, 'frontend/teacher_panel.html', {
+        'teacher_login': teacher_login,
+        'teacher_name': teacher_name,
+    })
+def teacher_logout(request):
+    """Выход из кабинета учителя."""
+    teacher = request.session.pop('teacher_auth', None)
+    request.session.pop('teacher_name', None)
+    logger.info(f"Выход из кабинета учителя: {teacher}")
     return redirect('panel-login-page')
