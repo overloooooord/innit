@@ -298,8 +298,13 @@ def _load_from_local_db(search):
     for app in qs[:100]:
         sr = app.scoring_result or {}
         flags = sr.get('flags', {})
-        coherence = flags.get('coherence', {})
-        ai_flag = coherence.get('status') in ('alert', 'critical')
+        ai_det = flags.get('ai_detection', {})
+        # If the ML detector gave an alert/warning or mentions AI probability
+        ai_flag = (
+            ai_det.get('status') in ('warning', 'alert', 'critical', 'danger') or
+            'ИИ' in str(ai_det.get('detail', '')) or
+            'AI' in str(ai_det.get('detail', ''))
+        )
         results.append({
             'id': app.id,
             'telegram_id': app.telegram_id or 0,
@@ -371,6 +376,11 @@ def _serialize_bot_app(app):
         'score_explanation': app.score_explanation,
         'score_radar': app.score_radar,
         'score_flags': app.score_flags,
+        'ai_detection_flag': (
+            (app.score_flags or {}).get('ai_detection', {}).get('status') in ('warning', 'alert', 'critical', 'danger') or
+            'ИИ' in str((app.score_flags or {}).get('ai_detection', {}).get('detail', '')) or
+            'AI' in str((app.score_flags or {}).get('ai_detection', {}).get('detail', ''))
+        ) if app.score_flags else False,
         'scored_at': str(app.scored_at) if app.scored_at else None,
         'updated_at': str(app.updated_at) if app.updated_at else None,
     }
