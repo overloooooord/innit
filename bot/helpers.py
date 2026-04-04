@@ -29,7 +29,7 @@ def validate_city(text: str) -> bool:
 def validate_year(text: str) -> int | None:
     try:
         year = int(text.strip())
-        if 2018 <= year <= 2025:
+        if 2018 <= year <= 2026:
             return year
     except ValueError:
         pass
@@ -60,24 +60,14 @@ def validate_essay(text: str) -> tuple[bool, int, str]:
 
 
 def extract_gpa(raw: str) -> float | None:
-    """Try to extract a numeric GPA value from raw string"""
-    raw = raw.strip()
-    # e.g. "4.5", "4,5", "38/45 по IB"
-    match = re.search(r"(\d+[.,]\d+|\d+)\s*/\s*(\d+)", raw)
-    if match:
-        numerator = float(match.group(1).replace(",", "."))
-        denominator = float(match.group(2))
-        if denominator > 0:
-            return round(numerator / denominator * 5, 2)  # normalize to 5-scale
-    match = re.search(r"(\d+[.,]\d+|\d+)", raw)
-    if match:
-        val = float(match.group(1).replace(",", "."))
-        if 0 <= val <= 5:
+    raw = raw.strip().replace(",", ".")
+    try:
+        val = float(raw)
+        if 1.0 <= val <= 5.0:
             return round(val, 2)
-        if 5 < val <= 100:
-            return round(val / 100 * 5, 2)
+    except ValueError:
+        return None
     return None
-
 
 SLPI_MAPPING = {
     # step1 → Challenge the Process / Enable Others
@@ -130,7 +120,7 @@ def build_summary(app) -> str:
         f"*Регион:* {app.region or '—'}\n",
         f"*Тип школы:* {app.school_type or '—'}\n",
         f"*Языки:* {', '.join(app.languages) if app.languages else '—'}\n",
-        f"*GPA:* {app.gpa_raw or '—'}",
+        f"*GPA:* {app.gpa or '—'}",
         f"*IELTS:* {app.ielts_score or '—'}",
         f"*ЕНТ:* {app.ent_score or '—'}",
         "",
