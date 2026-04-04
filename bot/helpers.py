@@ -2,6 +2,7 @@ import re
 import json
 import os
 from datetime import datetime
+from config import ESSAY_MIN_WORDS, ESSAY_MAX_WORDS
 
 def validate_name(text: str) -> bool:
     """2–60 chars, only letters (cyrillic/latin) and spaces"""
@@ -51,10 +52,10 @@ def count_words(text: str) -> int:
 
 def validate_essay(text: str) -> tuple[bool, int, str]:
     wc = count_words(text)
-    if wc < 150:
-        return False, wc, f"Слишком коротко — {wc} слов. Нужно минимум 150."
-    if wc > 300:
-        return False, wc, f"Слишком длинно — {wc} слов. Максимум 300."
+    if wc < ESSAY_MIN_WORDS:
+        return False, wc, f"Слишком коротко — {wc} слов. Нужно минимум {ESSAY_MIN_WORDS}."
+    if wc > ESSAY_MAX_WORDS:
+        return False, wc, f"Слишком длинно — {wc} слов. Максимум {ESSAY_MAX_WORDS}."
     return True, wc, ""
 
 
@@ -80,28 +81,28 @@ def extract_gpa(raw: str) -> float | None:
 
 SLPI_MAPPING = {
     # step1 → Challenge the Process / Enable Others
-    "sc1_A": {"challenge": 0.3, "model": 0.7},
-    "sc1_B": {"enable": 0.8, "inspire": 0.5},
-    "sc1_C": {"challenge": 0.6, "model": 0.4},
-    "sc1_D": {"model": 0.5, "encourage": 0.3},
+    "sc1_A": {"challenge_process": 0.3, "model_the_way": 0.7},
+    "sc1_B": {"enable_others": 0.8, "inspire_vision": 0.5},
+    "sc1_C": {"challenge_process": 0.6, "model_the_way": 0.4},
+    "sc1_D": {"model_the_way": 0.5, "encourage_heart": 0.3},
     # step2 → Enable Others / Encourage the Heart
-    "sc2_A": {"encourage": 0.8, "enable": 0.3},
-    "sc2_B": {"model": 0.7, "challenge": 0.3},
-    "sc2_C": {"encourage": 0.6, "enable": 0.6},
-    "sc2_D": {"enable": 0.5, "model": 0.4},
+    "sc2_A": {"encourage_heart": 0.8, "enable_others": 0.3},
+    "sc2_B": {"model_the_way": 0.7, "challenge_process": 0.3},
+    "sc2_C": {"encourage_heart": 0.6, "enable_others": 0.6},
+    "sc2_D": {"enable_others": 0.5, "model_the_way": 0.4},
     # step3 → Challenge the Process
-    "sc3_A": {"model": 0.6},
-    "sc3_B": {"challenge": 0.8, "inspire": 0.5},
-    "sc3_C": {"challenge": 0.7, "model": 0.4},
-    "sc3_D": {"model": 0.4, "challenge": 0.2},
+    "sc3_A": {"model_the_way": 0.6},
+    "sc3_B": {"challenge_process": 0.8, "inspire_vision": 0.5},
+    "sc3_C": {"challenge_process": 0.7, "model_the_way": 0.4},
+    "sc3_D": {"model_the_way": 0.4, "challenge_process": 0.2},
     # step4 → Enable Others / Model the Way
-    "sc4_A": {"model": 0.8, "challenge": 0.3},
-    "sc4_B": {"enable": 0.8, "inspire": 0.5},
-    "sc4_C": {"challenge": 0.5, "model": 0.4},
-    "sc4_D": {"model": 0.6, "challenge": 0.4},
+    "sc4_A": {"model_the_way": 0.8, "challenge_process": 0.3},
+    "sc4_B": {"enable_others": 0.8, "inspire_vision": 0.5},
+    "sc4_C": {"challenge_process": 0.5, "model_the_way": 0.4},
+    "sc4_D": {"model_the_way": 0.6, "challenge_process": 0.4},
 }
 
-SLPI_DIMS = ["model", "inspire", "challenge", "enable", "encourage"]
+SLPI_DIMS = ["model_the_way", "inspire_vision", "challenge_process", "enable_others", "encourage_heart"]
 
 
 def compute_fingerprint(choices: list[str]) -> dict:
@@ -192,6 +193,7 @@ def save_to_json(app_data):
             "fingerprint_reliable": app_data.fingerprint_reliable or False,
             "timer_violations": app_data.timer_violations or 0,
             "funnel_stage": app_data.funnel_stage,
+            "essay_nlp": app_data.essay_nlp,
         },
         "scenario_results": app_data.scenario_choices,
         "submitted_at": datetime.utcnow().isoformat(),

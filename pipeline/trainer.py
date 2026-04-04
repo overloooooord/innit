@@ -48,7 +48,11 @@ def load_dataset(path: str) -> Tuple[np.ndarray, np.ndarray, List[dict]]:
             print(f"  [SKIP] Candidate {c.get('id', '?')}: unknown label '{label}'")
             continue
 
-        features = extract_features(c)
+        try:
+            features = extract_features(c)
+        except KeyError as e:
+            print(f"  [SKIP] Candidate {c.get('user_id', '?')}: {e}")
+            continue
         X_list.append(features)
         y_list.append(LABEL_MAP[label])
         valid_candidates.append(c)

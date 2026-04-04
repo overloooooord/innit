@@ -4,13 +4,16 @@ import numpy as np
 from typing import Dict, Any, List
 import shap
 
-from config import STRUCTURED_FEATURES, FEATURE_DESCRIPTIONS, FEATURE_GROUPS, LABEL_NAMES, SHAP_PLOTS_DIR
+from config import STRUCTURED_FEATURES, SLPI_FEATURES, ESSAY_FEATURES, FEATURE_DESCRIPTIONS, FEATURE_GROUPS, LABEL_NAMES, SHAP_PLOTS_DIR
+
+# Full feature name list matching extract_features() output: 20 structural + 5 SLPI + 6 essay NLP
+_ALL_FEATURE_NAMES = list(STRUCTURED_FEATURES) + ["fp_" + f for f in SLPI_FEATURES] + list(ESSAY_FEATURES)
 
 
 class CandidateExplainer:
     def __init__(self, model, X_background: np.ndarray = None):
         self.model         = model
-        self.feature_names = STRUCTURED_FEATURES
+        self.feature_names = _ALL_FEATURE_NAMES
         self.X_background  = X_background
 
         bg = X_background
