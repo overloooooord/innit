@@ -52,11 +52,10 @@ def count_words(text: str) -> int:
 
 def validate_essay(text: str) -> tuple[bool, int, str]:
     wc = count_words(text)
-    if wc < 70:
-        return False, wc, f"Слишком коротко — {wc} слов. Нужно минимум 70."
-    if wc > 300:
-        return False, wc, f"Слишком длинно — {wc} слов. Максимум 300."
-
+    if wc < ESSAY_MIN_WORDS:
+        return False, wc, f"Слишком коротко — {wc} слов. Нужно минимум {ESSAY_MIN_WORDS}."
+    if wc > ESSAY_MAX_WORDS:
+        return False, wc, f"Слишком длинно — {wc} слов. Максимум {ESSAY_MAX_WORDS}."
     return True, wc, ""
 
 
