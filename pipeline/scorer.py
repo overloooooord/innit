@@ -278,6 +278,9 @@ class ThreeStageScorer:
             except Exception:
                 essay_nlp = None
         if self.model_essay is not None and essay_nlp is not None:
+            if "bot_metadata" not in candidate:
+                candidate["bot_metadata"] = {}
+            candidate["bot_metadata"]["essay_nlp"] = essay_nlp
             X_essay = extract_essay_features(candidate).reshape(1, -1)
             stage_proba["essay"] = self.model_essay.predict_proba(X_essay)[0]
         final_proba = self._combine_proba(stage_proba)

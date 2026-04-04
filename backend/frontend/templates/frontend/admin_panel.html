@@ -414,7 +414,7 @@ async function showDetail(id) {
                             <div style="height:100%;width:${(v*100).toFixed(0)}%;border-radius:4px;background:${k==='shortlist'?'#22c55e':k==='reject'?'#ef4444':'#f59e0b'};"></div>
                         </div>
                     </div>`).join('') :
-                    `<div style="text-align:center;padding:1rem;"><button class="btn btn-accent" onclick="scoreOne(${c.id})">🤖 Запустить AI оценку</button></div>`}
+                    `<div style="text-align:center;padding:1rem;"><button class="btn btn-accent" onclick="scoreOne(${c.id}, this)">🤖 Запустить AI оценку</button></div>`}
             </div>
         </div>
 
@@ -445,13 +445,24 @@ document.getElementById('detailModal').addEventListener('click', e => {
     if (e.target === document.getElementById('detailModal')) closeModal();
 });
 
-async function scoreOne(id) {
+async function scoreOne(id, btn) {
+    if (btn) {
+        btn.disabled = true;
+        const oldText = btn.textContent;
+        btn.textContent = '⏳ Нейросеть думает...';
+    }
     try {
         const result = await api(`/api/admin/applications/${id}/score/`, { method:'POST' });
         showToast('✅ Оценка выполнена!', 'success');
         await loadApplications();
         if (document.getElementById('detailModal').style.display === 'block') showDetail(id);
-    } catch (e) { showToast(`❌ ${e.message}`, 'error'); }
+    } catch (e) {
+        showToast(`❌ ${e.message}`, 'error');
+        if (btn) {
+            btn.disabled = false;
+            btn.textContent = '🤖 Запустить AI оценку';
+        }
+    }
 }
 
 async function scoreAll() {
