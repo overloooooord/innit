@@ -1,16 +1,3 @@
-/*
- * styles.css — inVision U Frontend Styles
- * =========================================
- * Color palette matches the official inVision U website:
- *   - Accent: Lime Green (#BFFF00)
- *   - Light theme: white bg, black text
- *   - Dark theme: near-black bg, white text
- *
- * Font: Inter (Google Fonts) — loaded in index.html
- */
-
-/* ── CSS Variables ──────────────────────────────────────────── */
-
 [data-theme="dark"] {
   --clr-bg:         #0a0a0a;
   --clr-bg-2:       #141414;
@@ -30,7 +17,6 @@
   --shadow:         0 4px 24px rgba(0,0,0,0.4);
   --shadow-sm:      0 2px 8px rgba(0,0,0,0.3);
 }
-
 [data-theme="light"] {
   --clr-bg:         #ffffff;
   --clr-bg-2:       #f7f7f7;
@@ -50,19 +36,14 @@
   --shadow:         0 4px 24px rgba(0,0,0,0.08);
   --shadow-sm:      0 2px 8px rgba(0,0,0,0.05);
 }
-
-/* ── Reset & Base ──────────────────────────────────────────── */
-
 *, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
 }
-
 html {
   scroll-behavior: smooth;
 }
-
 body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   background: var(--clr-bg);
@@ -71,12 +52,8 @@ body {
   transition: background 0.3s ease, color 0.3s ease;
   min-height: 100vh;
 }
-
 a { color: var(--clr-accent); text-decoration: none; }
 a:hover { text-decoration: underline; }
-
-/* ── Typography ────────────────────────────────────────────── */
-
 .heading-xl {
   font-size: clamp(3rem, 8vw, 7rem);
   font-weight: 900;
@@ -84,13 +61,9 @@ a:hover { text-decoration: underline; }
   letter-spacing: -0.03em;
   text-transform: uppercase;
 }
-
 .accent-text {
   color: var(--clr-accent);
 }
-
-/* ── Header ────────────────────────────────────────────────── */
-
 .header {
   position: fixed;
   top: 0;
@@ -106,7 +79,6 @@ a:hover { text-decoration: underline; }
   border-bottom: 1px solid var(--clr-border);
   transition: background 0.3s;
 }
-
 .logo {
   display: flex;
   align-items: center;
@@ -116,9 +88,7 @@ a:hover { text-decoration: underline; }
   font-size: 1.1rem;
   color: var(--clr-text);
 }
-
 .logo:hover { text-decoration: none; }
-
 .logo-icon {
   width: 28px;
   height: 28px;
@@ -131,19 +101,16 @@ a:hover { text-decoration: underline; }
   font-size: 0.8rem;
   color: #000;
 }
-
 .header-right {
   display: flex;
   align-items: center;
   gap: 12px;
 }
-
 .lang-switch {
   display: flex;
   align-items: center;
   gap: 2px;
 }
-
 .lang-btn {
   background: none;
   border: none;
@@ -155,13 +122,11 @@ a:hover { text-decoration: underline; }
   border-radius: 4px;
   transition: all 0.2s;
 }
-
 .lang-btn:hover { color: var(--clr-text); }
 .lang-btn.active {
   background: var(--clr-accent);
   color: #000;
 }
-
 .theme-btn {
   background: none;
   border: 1px solid var(--clr-border);
@@ -176,7 +141,6 @@ a:hover { text-decoration: underline; }
   transition: all 0.2s;
 }
 .theme-btn:hover { border-color: var(--clr-accent); }
-
 .header-btn {
   padding: 8px 20px;
   border-radius: 6px;
@@ -187,7 +151,6 @@ a:hover { text-decoration: underline; }
   transition: all 0.2s;
   white-space: nowrap;
 }
-
 .btn-accent {
   background: var(--clr-accent);
   color: #000;
@@ -196,7 +159,6 @@ a:hover { text-decoration: underline; }
   background: var(--clr-accent-dim);
   transform: translateY(-1px);
 }
-
 .btn-outline {
   background: transparent;
   color: var(--clr-text);
@@ -206,28 +168,20 @@ a:hover { text-decoration: underline; }
   border-color: var(--clr-accent);
   color: var(--clr-accent);
 }
-
-/* ── Screens ───────────────────────────────────────────────── */
-
 .screen {
   display: none;
   opacity: 0;
   padding-top: 64px;
   min-height: 100vh;
 }
-
 .screen.active {
   display: block;
   animation: fadeIn 0.5s ease forwards;
 }
-
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(16px); }
   to   { opacity: 1; transform: translateY(0); }
 }
-
-/* ── Hero / Landing ────────────────────────────────────────── */
-
 .hero {
   display: flex;
   flex-direction: column;
@@ -239,7 +193,6 @@ a:hover { text-decoration: underline; }
   position: relative;
   overflow: hidden;
 }
-
 .hero-bg-text {
   position: absolute;
   top: 50%;
@@ -255,7 +208,6 @@ a:hover { text-decoration: underline; }
   line-height: 1;
   user-select: none;
 }
-
 .hero-badge {
   display: inline-flex;
   align-items: center;
@@ -269,7 +221,6 @@ a:hover { text-decoration: underline; }
   color: var(--clr-text-2);
   margin-bottom: 2rem;
 }
-
 .hero h1 {
   font-size: clamp(3rem, 7vw, 6rem);
   font-weight: 900;
@@ -277,12 +228,10 @@ a:hover { text-decoration: underline; }
   letter-spacing: -0.03em;
   margin-bottom: 1.5rem;
 }
-
 .hero h1 .accent-text {
   display: block;
   color: var(--clr-accent);
 }
-
 .hero-description {
   max-width: 600px;
   color: var(--clr-text-2);
@@ -290,7 +239,6 @@ a:hover { text-decoration: underline; }
   margin-bottom: 2.5rem;
   line-height: 1.7;
 }
-
 .hero-cta {
   display: inline-flex;
   align-items: center;
@@ -310,19 +258,16 @@ a:hover { text-decoration: underline; }
   transform: translateY(-2px);
   box-shadow: 0 8px 32px rgba(191, 255, 0, 0.3);
 }
-
 .hero-note {
   margin-top: 1.5rem;
   font-size: 0.85rem;
   color: var(--clr-text-2);
 }
-
 .hero-stats {
   display: flex;
   gap: 2rem;
   margin-top: 3rem;
 }
-
 .hero-stat {
   background: var(--clr-bg-2);
   border: 1px solid var(--clr-border);
@@ -331,21 +276,16 @@ a:hover { text-decoration: underline; }
   text-align: center;
   min-width: 100px;
 }
-
 .hero-stat-value {
   font-size: 1.3rem;
   font-weight: 800;
   color: var(--clr-accent);
 }
-
 .hero-stat-label {
   font-size: 0.75rem;
   color: var(--clr-text-2);
   margin-top: 4px;
 }
-
-/* ── Cards / Glass ─────────────────────────────────────────── */
-
 .card {
   background: var(--clr-card);
   border: 1px solid var(--clr-border);
@@ -355,32 +295,25 @@ a:hover { text-decoration: underline; }
   margin: 0 auto;
   box-shadow: var(--shadow);
 }
-
 .card-title {
   font-size: 2rem;
   font-weight: 800;
   margin-bottom: 0.5rem;
 }
-
 .card-subtitle {
   color: var(--clr-text-2);
   margin-bottom: 2rem;
   font-size: 0.95rem;
 }
-
-/* ── Forms ──────────────────────────────────────────────────── */
-
 .form-screen {
   padding: 3rem 2rem;
   display: flex;
   align-items: flex-start;
   justify-content: center;
 }
-
 .form-group {
   margin-bottom: 1.2rem;
 }
-
 .form-group label {
   display: block;
   font-size: 0.85rem;
@@ -388,7 +321,6 @@ a:hover { text-decoration: underline; }
   margin-bottom: 6px;
   color: var(--clr-text-2);
 }
-
 .form-group input,
 .form-group select,
 .form-group textarea {
@@ -403,33 +335,26 @@ a:hover { text-decoration: underline; }
   transition: all 0.2s;
   outline: none;
 }
-
 .form-group input:focus,
 .form-group select:focus,
 .form-group textarea:focus {
   border-color: var(--clr-accent);
   box-shadow: 0 0 0 3px rgba(191, 255, 0, 0.15);
 }
-
 .form-group input[readonly] {
   opacity: 0.6;
   cursor: default;
 }
-
 .form-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 1rem;
 }
-
-/* ── Chips (Multi-select languages) ────────────────────────── */
-
 .chips-container {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
 }
-
 .chip {
   display: inline-flex;
   align-items: center;
@@ -442,20 +367,15 @@ a:hover { text-decoration: underline; }
   transition: all 0.2s;
   user-select: none;
 }
-
 .chip:hover {
   border-color: var(--clr-accent);
 }
-
 .chip.selected {
   background: var(--clr-accent);
   color: #000;
   border-color: var(--clr-accent);
   font-weight: 600;
 }
-
-/* ── Buttons ───────────────────────────────────────────────── */
-
 .btn {
   display: inline-flex;
   align-items: center;
@@ -471,7 +391,6 @@ a:hover { text-decoration: underline; }
   font-family: inherit;
   position: relative;
 }
-
 .btn-primary {
   background: var(--clr-accent);
   color: #000;
@@ -486,19 +405,16 @@ a:hover { text-decoration: underline; }
   cursor: not-allowed;
   transform: none;
 }
-
 .btn-secondary {
   background: var(--clr-bg-2);
   color: var(--clr-text);
   border: 1px solid var(--clr-border);
 }
 .btn-secondary:hover { border-color: var(--clr-accent); }
-
 .btn-nav {
   padding: 10px 24px;
   font-size: 0.9rem;
 }
-
 .spinner {
   width: 18px;
   height: 18px;
@@ -507,13 +423,8 @@ a:hover { text-decoration: underline; }
   border-radius: 50%;
   animation: spin 0.6s linear infinite;
 }
-
 @keyframes spin { to { transform: rotate(360deg); } }
-
 .hidden { display: none !important; }
-
-/* ── Error message ─────────────────────────────────────────── */
-
 .error-msg {
   background: rgba(255, 68, 68, 0.1);
   border: 1px solid var(--clr-danger);
@@ -523,9 +434,6 @@ a:hover { text-decoration: underline; }
   font-size: 0.9rem;
   margin-bottom: 1rem;
 }
-
-/* ── Progress Bar ──────────────────────────────────────────── */
-
 .progress-bar {
   height: 6px;
   background: var(--clr-bg-3);
@@ -533,34 +441,27 @@ a:hover { text-decoration: underline; }
   margin-bottom: 2rem;
   overflow: hidden;
 }
-
 .progress-fill {
   height: 100%;
   background: var(--clr-accent);
   border-radius: 3px;
   transition: width 0.3s ease;
 }
-
 .progress-label {
   font-size: 0.8rem;
   color: var(--clr-text-2);
   margin-bottom: 0.5rem;
   text-align: right;
 }
-
-/* ── Test Options ──────────────────────────────────────────── */
-
 .test-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   margin-bottom: 2rem;
 }
-
 .test-question {
   margin-bottom: 2rem;
 }
-
 .test-q-number {
   font-size: 0.8rem;
   font-weight: 700;
@@ -569,20 +470,17 @@ a:hover { text-decoration: underline; }
   letter-spacing: 0.1em;
   margin-bottom: 0.5rem;
 }
-
 .test-q-text {
   font-size: 1.2rem;
   font-weight: 600;
   line-height: 1.5;
 }
-
 .test-options {
   display: flex;
   flex-direction: column;
   gap: 12px;
   margin-bottom: 2rem;
 }
-
 .test-option {
   display: flex;
   align-items: center;
@@ -594,17 +492,14 @@ a:hover { text-decoration: underline; }
   cursor: pointer;
   transition: all 0.2s;
 }
-
 .test-option:hover {
   border-color: var(--clr-accent);
   background: var(--clr-card-hover);
 }
-
 .test-option.selected {
   border-color: var(--clr-accent);
   background: rgba(191, 255, 0, 0.08);
 }
-
 .test-option-circle {
   width: 22px;
   height: 22px;
@@ -614,12 +509,10 @@ a:hover { text-decoration: underline; }
   transition: all 0.2s;
   position: relative;
 }
-
 .test-option.selected .test-option-circle {
   border-color: var(--clr-accent);
   background: var(--clr-accent);
 }
-
 .test-option.selected .test-option-circle::after {
   content: '✓';
   position: absolute;
@@ -630,20 +523,15 @@ a:hover { text-decoration: underline; }
   font-size: 12px;
   font-weight: 900;
 }
-
 .test-option-text {
   font-size: 0.95rem;
   line-height: 1.5;
 }
-
 .test-nav {
   display: flex;
   justify-content: space-between;
   gap: 1rem;
 }
-
-/* ── Timer ──────────────────────────────────────────────────── */
-
 .timer {
   font-size: 1.5rem;
   font-weight: 800;
@@ -654,20 +542,15 @@ a:hover { text-decoration: underline; }
   background: var(--clr-bg-2);
   border: 1px solid var(--clr-border);
 }
-
 .timer.warning { color: var(--clr-warning); }
 .timer.danger {
   color: var(--clr-danger);
   animation: pulse 0.5s ease infinite alternate;
 }
-
 @keyframes pulse {
   from { opacity: 1; }
   to   { opacity: 0.4; }
 }
-
-/* ── Violation Badge ───────────────────────────────────────── */
-
 .violation-badge {
   display: inline-flex;
   align-items: center;
@@ -680,9 +563,6 @@ a:hover { text-decoration: underline; }
   font-size: 0.8rem;
   font-weight: 600;
 }
-
-/* ── Success Screen ────────────────────────────────────────── */
-
 .success-screen {
   display: flex;
   flex-direction: column;
@@ -692,7 +572,6 @@ a:hover { text-decoration: underline; }
   text-align: center;
   padding: 2rem;
 }
-
 .success-icon {
   width: 100px;
   height: 100px;
@@ -705,24 +584,20 @@ a:hover { text-decoration: underline; }
   margin-bottom: 2rem;
   animation: scaleIn 0.5s ease;
 }
-
 @keyframes scaleIn {
   from { transform: scale(0); }
   to   { transform: scale(1); }
 }
-
 .success-title {
   font-size: 2.5rem;
   font-weight: 800;
   margin-bottom: 1rem;
 }
-
 .success-sub {
   color: var(--clr-text-2);
   margin-bottom: 2rem;
   font-size: 1.1rem;
 }
-
 .tg-link {
   display: inline-flex;
   align-items: center;
@@ -741,23 +616,15 @@ a:hover { text-decoration: underline; }
   transform: translateY(-1px);
   text-decoration: none;
 }
-
-/* ── Login Screen ──────────────────────────────────────────── */
-
 .login-card {
   max-width: 440px;
 }
-
 .login-card .card-title {
   text-align: center;
 }
-
 .login-card .card-subtitle {
   text-align: center;
 }
-
-/* ── Toast Notifications ───────────────────────────────────── */
-
 .toast-container {
   position: fixed;
   top: 80px;
@@ -768,7 +635,6 @@ a:hover { text-decoration: underline; }
   gap: 10px;
   max-width: 400px;
 }
-
 .toast {
   padding: 14px 20px;
   border-radius: 10px;
@@ -777,38 +643,29 @@ a:hover { text-decoration: underline; }
   animation: slideInRight 0.3s ease;
   box-shadow: var(--shadow);
 }
-
 .toast.success {
   background: var(--clr-accent);
   color: #000;
 }
-
 .toast.error {
   background: var(--clr-danger);
   color: #fff;
 }
-
 .toast.warning {
   background: var(--clr-warning);
   color: #000;
 }
-
 .toast.out {
   animation: slideOutRight 0.3s ease forwards;
 }
-
 @keyframes slideInRight {
   from { transform: translateX(100%); opacity: 0; }
   to   { transform: translateX(0); opacity: 1; }
 }
-
 @keyframes slideOutRight {
   from { transform: translateX(0); opacity: 1; }
   to   { transform: translateX(100%); opacity: 0; }
 }
-
-/* ── Loader Overlay ────────────────────────────────────────── */
-
 .loader-overlay {
   position: fixed;
   inset: 0;
@@ -819,7 +676,6 @@ a:hover { text-decoration: underline; }
   justify-content: center;
   backdrop-filter: blur(4px);
 }
-
 .loader-spinner {
   width: 48px;
   height: 48px;
@@ -828,9 +684,6 @@ a:hover { text-decoration: underline; }
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
-
-/* ── Responsive ────────────────────────────────────────────── */
-
 @media (max-width: 768px) {
   .header { padding: 0 1rem; }
   .form-row { grid-template-columns: 1fr; }
@@ -841,7 +694,6 @@ a:hover { text-decoration: underline; }
   .btn-nav { width: 100%; }
   .header-btn.btn-outline { display: none; }
 }
-
 @media (max-width: 480px) {
   .header { height: 56px; }
   .hero h1 { font-size: 2rem; }

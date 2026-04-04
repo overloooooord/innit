@@ -1,6 +1,3 @@
-"""
-views.py — Frontend views (страницы, не API).
-"""
 import bcrypt
 import logging
 from django.shortcuts import render, redirect
@@ -10,23 +7,16 @@ from django.conf import settings
 import json
 logger = logging.getLogger('candidates')
 def index(request):
-    """Главная страница."""
     return render(request, 'frontend/index.html')
 def register(request):
-    """Страница регистрации кандидата."""
     return render(request, 'frontend/register.html')
 def candidate_detail(request, pk):
-    """Страница деталей кандидата."""
     return render(request, 'frontend/candidate_detail.html', {'candidate_id': pk})
 def panel_view(request):
-    """
-    Админ-панель — доступ ТОЛЬКО с admin-сессией.
-    """
     if not request.session.get('panel_auth'):
         return redirect('panel-login-page')
     return render(request, 'frontend/admin_panel.html')
 def panel_login_page(request):
-    """Страница логина (общая для admin и teachers)."""
     if request.session.get('panel_auth'):
         return redirect('panel')
     if request.session.get('teacher_auth'):
@@ -34,11 +24,6 @@ def panel_login_page(request):
     return render(request, 'frontend/login.html')
 @csrf_exempt
 def panel_login(request):
-    """
-    POST — обработка логина.
-    Если admin credentials → сессия panel_auth → /panel/
-    Если teacher credentials → сессия teacher_auth → /teacher/
-    """
     if request.method != 'POST':
         return JsonResponse({'error': 'Method not allowed'}, status=405)
     try:
@@ -75,14 +60,10 @@ def panel_login(request):
         status=401,
     )
 def panel_logout(request):
-    """Выход из админ-панели."""
     request.session.pop('panel_auth', None)
     logger.info("Выход из админ-панели")
     return redirect('panel-login-page')
 def teacher_view(request):
-    """
-    Кабинет учителя — доступ ТОЛЬКО с teacher-сессией.
-    """
     if not request.session.get('teacher_auth'):
         return redirect('panel-login-page')
     teacher_login = request.session['teacher_auth']
@@ -92,7 +73,6 @@ def teacher_view(request):
         'teacher_name': teacher_name,
     })
 def teacher_logout(request):
-    """Выход из кабинета учителя."""
     teacher = request.session.pop('teacher_auth', None)
     request.session.pop('teacher_name', None)
     logger.info(f"Выход из кабинета учителя: {teacher}")

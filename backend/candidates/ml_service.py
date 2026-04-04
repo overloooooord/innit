@@ -1,7 +1,3 @@
-"""
-ML Service — singleton wrapper around pipeline/scorer.py
-Loads the trained model once and provides scoring API.
-"""
 import os
 import sys
 import logging
@@ -32,10 +28,8 @@ def get_scorer():
     logger.info("ML model loaded successfully")
     return _scorer
 def score_candidate(candidate_dict):
-    """Score a single candidate. Returns the full result dict."""
     scorer = get_scorer()
     return scorer.score(candidate_dict)
 def rank_candidates(candidate_dicts):
-    """Rank a list of candidates. Returns sorted list with ranks."""
     scorer = get_scorer()
     return scorer.rank(candidate_dicts)

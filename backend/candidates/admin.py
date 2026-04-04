@@ -1,7 +1,3 @@
-"""
-admin.py — Django Admin configuration.
-Simplified: only Candidate, ScoringResult, Application models.
-"""
 from django.contrib import admin
 from .models import Candidate, ScoringResult, Application
 @admin.register(Candidate)

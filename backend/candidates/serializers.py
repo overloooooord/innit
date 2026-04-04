@@ -1,8 +1,3 @@
-"""
-serializers.py — Сериалайзеры для валидации входных данных.
-Упрощённая версия: только Candidate (ML pipeline), Application (бот-данные).
-MBTI и LanguageTest удалены — не используются ботом.
-"""
 from rest_framework import serializers
 from .models import Candidate, ScoringResult, Application
 from .kz_regions import (
@@ -47,7 +42,6 @@ class CandidateDetailSerializer(serializers.ModelSerializer):
             'has_mentor', 'profile_data', 'scoring', 'created_at',
         ]
 class CandidateRegisterSerializer(serializers.Serializer):
-    """Accepts the full candidate JSON (matching candidate_scheme.json)."""
     personal = serializers.DictField(required=True)
     education = serializers.DictField(required=True)
     experience = serializers.DictField(required=False, default=dict)
@@ -74,11 +68,6 @@ class CandidateRegisterSerializer(serializers.Serializer):
         )
         return candidate
 class ApplicationSerializer(serializers.ModelSerializer):
-    """
-    CRUD сериалайзер для заявок (бот-формат).
-    Включает все поля: personal, education (GPA, olympiads, courses),
-    projects, essay, telegram_id.
-    """
     class Meta:
         model = Application
         fields = [
@@ -105,7 +94,6 @@ class ApplicationSerializer(serializers.ModelSerializer):
             value = value[1:]
         return f"@{value}" if value else ''
 class ApplicationListSerializer(serializers.ModelSerializer):
-    """Compact serializer for list views."""
     class Meta:
         model = Application
         fields = [

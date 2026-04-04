@@ -3,13 +3,11 @@ import logging
 from datetime import datetime
 from keyboards import kb_school
 from helpers import save_to_json
-
 from aiogram import Router, F, Bot
 from aiogram.filters import CommandStart, Command
 from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.fsm.context import FSMContext
 from aiogram.exceptions import TelegramBadRequest
-
 from states import (
     ConsentState, PersonalState, EducationState,
     ExperienceState, EssayState, ScenarioState, FileUploadState
@@ -28,17 +26,8 @@ from helpers import (
     compute_fingerprint, build_summary
 )
 from config import MAX_OLYMPIADS, MAX_COURSES, MAX_PROJECTS, SCENARIO_TIMER_SECONDS
-
 router = Router()
 logger = logging.getLogger(__name__)
-
-# ──────────────────────────────────────────────
-# SCENARIO DEFINITIONS
-# Full 25-question branching tree (InVision U SLPI bank)
-# Each candidate sees: 5 entry questions + 5 branch questions = 10 total
-# ──────────────────────────────────────────────
-
-# Structure: scenario_id -> { "entry": {...}, "branches": { "A": {...}, "B": {...}, ... } }
 SCENARIOS = {
     "sc1": {
         "entry": {
@@ -105,7 +94,6 @@ SCENARIOS = {
             },
         }
     },
-
     "sc2": {
         "entry": {
             "text": (
@@ -172,7 +160,6 @@ SCENARIOS = {
             },
         }
     },
-
     "sc3": {
         "entry": {
             "text": (
@@ -239,7 +226,6 @@ SCENARIOS = {
             },
         }
     },
-
     "sc4": {
         "entry": {
             "text": (
@@ -306,7 +292,6 @@ SCENARIOS = {
             },
         }
     },
-
     "sc5": {
         "entry": {
             "text": (
@@ -373,28 +358,14 @@ SCENARIOS = {
         }
     },
 }
-
 SCENARIO_ORDER = ["sc1", "sc2", "sc3", "sc4", "sc5"]
-
-
-# ──────────────────────────────────────────────
-# SCENARIO KEYBOARD BUILDER
-# ──────────────────────────────────────────────
-
 def kb_scenario(sc_id: str, phase: str) -> InlineKeyboardMarkup:
-    """
-    sc_id: e.g. "sc1", "sc2", ...
-    phase: "entry" or the branch letter chosen at entry ("A"/"B"/"C"/"D")
-    """
     if phase == "entry":
         q = SCENARIOS[sc_id]["entry"]
     else:
         q = SCENARIOS[sc_id]["branches"][phase]
-
     buttons = []
     for letter, label in q["options"].items():
-        # callback_data format: "ans_{sc_id}_{phase}_{letter}"
-        # e.g. "ans_sc1_entry_B" or "ans_sc1_B_C"
         buttons.append([
             InlineKeyboardButton(
                 text=f"{letter}. {label}",
@@ -402,18 +373,10 @@ def kb_scenario(sc_id: str, phase: str) -> InlineKeyboardMarkup:
             )
         ])
     return InlineKeyboardMarkup(inline_keyboard=buttons)
-
-
 def get_question_text(sc_id: str, phase: str) -> str:
     if phase == "entry":
         return SCENARIOS[sc_id]["entry"]["text"]
     return SCENARIOS[sc_id]["branches"][phase]["text"]
-
-
-# ──────────────────────────────────────────────
-# BLOCK 1 — Welcome
-# ──────────────────────────────────────────────
-
 @router.message(CommandStart())
 async def cmd_start(message: Message, state: FSMContext):
     await state.clear()
@@ -443,8 +406,6 @@ async def cmd_start(message: Message, state: FSMContext):
         reply_markup=kb_start(),
         parse_mode="Markdown"
     )
-
-
 @router.callback_query(F.data == "about")
 async def about_invision(callback: CallbackQuery):
     await callback.message.edit_text(
@@ -457,8 +418,6 @@ async def about_invision(callback: CallbackQuery):
         parse_mode="Markdown"
     )
     await callback.answer()
-
-
 @router.callback_query(F.data == "start_app")
 async def start_app(callback: CallbackQuery, state: FSMContext):
     await callback.message.edit_text(
@@ -483,12 +442,6 @@ async def start_app(callback: CallbackQuery, state: FSMContext):
     )
     await state.set_state(ConsentState.waiting)
     await callback.answer()
-
-
-# ──────────────────────────────────────────────
-# BLOCK 2 — Consent
-# ──────────────────────────────────────────────
-
 @router.callback_query(ConsentState.waiting, F.data == "consent_yes")
 async def consent_yes(callback: CallbackQuery, state: FSMContext):
     await update_application(
@@ -500,8 +453,6 @@ async def consent_yes(callback: CallbackQuery, state: FSMContext):
     await callback.message.edit_text("✅ Согласие получено. Начинаем!")
     await ask_name(callback.message, state)
     await callback.answer()
-
-
 @router.callback_query(ConsentState.waiting, F.data == "consent_no")
 async def consent_no(callback: CallbackQuery, state: FSMContext):
     await update_application(callback.from_user.id, funnel_stage="consent_declined", consent_given=False)
@@ -512,17 +463,9 @@ async def consent_no(callback: CallbackQuery, state: FSMContext):
     )
     await state.clear()
     await callback.answer()
-
-
-# ──────────────────────────────────────────────
-# BLOCK 3 — Personal Data
-# ──────────────────────────────────────────────
-
 async def ask_name(message: Message, state: FSMContext):
     await message.answer("*Блок 1 из 5 — Личные данные*\n\nКак тебя зовут?\nНапиши имя и фамилию.", parse_mode="Markdown")
     await state.set_state(PersonalState.name)
-
-
 @router.message(PersonalState.name)
 async def process_name(message: Message, state: FSMContext):
     if not validate_name(message.text):
@@ -531,8 +474,6 @@ async def process_name(message: Message, state: FSMContext):
     await update_application(message.from_user.id, name=message.text.strip())
     await message.answer("Сколько тебе лет?")
     await state.set_state(PersonalState.age)
-
-
 @router.message(PersonalState.age)
 async def process_age(message: Message, state: FSMContext):
     age = validate_age(message.text)
@@ -542,42 +483,27 @@ async def process_age(message: Message, state: FSMContext):
     await update_application(message.from_user.id, age=age)
     await message.answer("Из какого ты города или посёлка?")
     await state.set_state(PersonalState.city)
-
-
 @router.message(PersonalState.city)
 async def process_city(message: Message, state: FSMContext):
     await update_application(message.from_user.id, city=message.text)
     await state.set_state(PersonalState.region)
     await message.answer("В каком регионе ты живешь? (например, Область или Край)")
-
-
 @router.message(PersonalState.region)
 async def process_region(message: Message, state: FSMContext):
     await update_application(message.from_user.id, region=message.text, funnel_stage="personal_done")
     await state.set_state(EducationState.school_type)
     await message.answer("Выбери тип твоего учебного заведения:", reply_markup=kb_school)
-
-
-# ──────────────────────────────────────────────
-# BLOCK 4 — Education
-# ──────────────────────────────────────────────
-
 @router.callback_query(EducationState.school_type, F.data.startswith("school:"))
 async def process_school(callback: CallbackQuery, state: FSMContext):
     school_val = callback.data.split(":")[1]
     await update_application(callback.from_user.id, school_type=school_val)
     await state.set_state(EducationState.languages)
     await callback.message.edit_text("Какие языки ты знаешь? Перечисли через запятую (например: Русский, Английский, Казахский)")
-
-
 @router.message(EducationState.languages)
 async def process_languages(message: Message, state: FSMContext):
-    # Превращаем строку в список, убирая лишние пробелы
     langs = [lang.strip() for lang in message.text.split(",")]
     await update_application(message.from_user.id, languages=langs)
-
     await ask_gpa(message, state)
-
 async def ask_gpa(message: Message, state: FSMContext):
     await message.answer(
         "*Блок 2 из 5 — Образование*\n\n"
@@ -587,8 +513,6 @@ async def ask_gpa(message: Message, state: FSMContext):
         parse_mode="Markdown"
     )
     await state.set_state(EducationState.gpa)
-
-
 @router.message(EducationState.gpa)
 async def process_gpa(message: Message, state: FSMContext):
     raw = message.text.strip()
@@ -598,8 +522,6 @@ async def process_gpa(message: Message, state: FSMContext):
     gpa = extract_gpa(raw)
     await update_application(message.from_user.id, gpa_raw=raw, gpa=gpa)
     await ask_ielts(message, state)
-
-
 async def ask_ielts(message: Message, state: FSMContext):
     await message.answer(
         "Напишите ваш балл IELTS:\n"
@@ -607,8 +529,6 @@ async def ask_ielts(message: Message, state: FSMContext):
         reply_markup=kb_no_ielts()
     )
     await state.set_state(EducationState.ielts_score)
-
-
 @router.message(EducationState.ielts_score)
 async def process_ielts_score(message: Message, state: FSMContext):
     raw = message.text.strip().replace(",", ".")
@@ -621,15 +541,11 @@ async def process_ielts_score(message: Message, state: FSMContext):
         return
     await update_application(message.from_user.id, ielts_score=raw)
     await ask_ent(message, state)
-
-
 @router.callback_query(EducationState.ielts_score, F.data == "no_ielts")
 async def no_ielts(callback: CallbackQuery, state: FSMContext):
     await callback.message.edit_text("IELTS пропущен.")
     await ask_ent(callback.message, state)
     await callback.answer()
-
-
 async def ask_ent(message: Message, state: FSMContext):
     await message.answer(
         "Напишите ваш балл ЕНТ:\n"
@@ -637,8 +553,6 @@ async def ask_ent(message: Message, state: FSMContext):
         reply_markup=kb_no_ent()
     )
     await state.set_state(EducationState.ent_score)
-
-
 @router.message(EducationState.ent_score)
 async def process_ent_score(message: Message, state: FSMContext):
     raw = message.text.strip()
@@ -651,15 +565,11 @@ async def process_ent_score(message: Message, state: FSMContext):
         return
     await update_application(message.from_user.id, ent_score=raw)
     await ask_test_certs(message, state)
-
-
 @router.callback_query(EducationState.ent_score, F.data == "no_ent")
 async def no_ent(callback: CallbackQuery, state: FSMContext):
     await callback.message.edit_text("ЕНТ пропущен.")
     await ask_test_certs(callback.message, state)
     await callback.answer()
-
-
 async def ask_test_certs(message: Message, state: FSMContext):
     await message.answer(
         "📎 Загрузите сертификаты IELTS / ЕНТ.\n\n"
@@ -668,8 +578,6 @@ async def ask_test_certs(message: Message, state: FSMContext):
         reply_markup=kb_skip_cert()
     )
     await state.set_state(EducationState.cert_upload)
-
-
 @router.message(EducationState.cert_upload, F.document | F.photo)
 async def handle_cert_upload(message: Message, state: FSMContext):
     file_info = {"category": "certificate"}
@@ -692,22 +600,16 @@ async def handle_cert_upload(message: Message, state: FSMContext):
     files = list(app.uploaded_files or [])
     files.append(file_info)
     await update_application(message.from_user.id, uploaded_files=files)
-    await message.answer(f"✅ Сертификат #{len(files)} получен. Отправь ещё или нажми «Пропустить».",
+    await message.answer(f"✅ Сертификат
                          reply_markup=kb_skip_cert())
-
-
 @router.callback_query(EducationState.cert_upload, F.data == "skip_cert")
 async def skip_cert(callback: CallbackQuery, state: FSMContext):
     await callback.message.edit_text("Сертификаты сохранены ✅")
     await after_certs(callback.message, state, callback.from_user.id)
     await callback.answer()
-
-
 @router.message(EducationState.cert_upload, F.text.lower().in_(["готово", "done", "/done"]))
 async def cert_done_text(message: Message, state: FSMContext):
     await after_certs(message, state, message.from_user.id)
-
-
 async def after_certs(message: Message, state: FSMContext, user_id: int):
     await update_application(user_id, funnel_stage="education_done")
     await message.answer(
@@ -715,31 +617,21 @@ async def after_certs(message: Message, state: FSMContext, user_id: int):
         reply_markup=kb_yes_skip()
     )
     await state.set_state(EducationState.olympiad_filter)
-
-
-# ── Olympiads ──
-
 @router.callback_query(EducationState.olympiad_filter, F.data == "yes")
 async def olympiad_yes(callback: CallbackQuery, state: FSMContext):
     await callback.message.edit_text("Напиши предмет олимпиады.\nНапример: математика, биология, робототехника")
     await state.set_state(EducationState.olympiad_subject)
     await callback.answer()
-
-
 @router.callback_query(EducationState.olympiad_filter, F.data == "skip")
 async def olympiad_skip(callback: CallbackQuery, state: FSMContext):
     await callback.message.edit_text("Олимпиады пропущены.")
     await ask_courses(callback.message, state)
     await callback.answer()
-
-
 @router.message(EducationState.olympiad_subject)
 async def process_olympiad_subject(message: Message, state: FSMContext):
     await state.update_data(current_olympiad={"subject": message.text.strip()})
     await message.answer("В каком году это было?")
     await state.set_state(EducationState.olympiad_year)
-
-
 @router.message(EducationState.olympiad_year)
 async def process_olympiad_year(message: Message, state: FSMContext):
     year = validate_year(message.text)
@@ -752,8 +644,6 @@ async def process_olympiad_year(message: Message, state: FSMContext):
     await state.update_data(current_olympiad=olympiad)
     await message.answer("Какой уровень?", reply_markup=kb_olympiad_level())
     await state.set_state(EducationState.olympiad_level)
-
-
 @router.callback_query(EducationState.olympiad_level, F.data.startswith("level_"))
 async def process_olympiad_level(callback: CallbackQuery, state: FSMContext):
     level = callback.data.replace("level_", "")
@@ -764,20 +654,16 @@ async def process_olympiad_level(callback: CallbackQuery, state: FSMContext):
     await callback.message.edit_text("Ты занял(а) призовое место?", reply_markup=kb_prize())
     await state.set_state(EducationState.olympiad_prize)
     await callback.answer()
-
-
 @router.callback_query(EducationState.olympiad_prize, F.data.in_(["prize_yes", "prize_no"]))
 async def process_olympiad_prize(callback: CallbackQuery, state: FSMContext):
     prize = callback.data == "prize_yes"
     data = await state.get_data()
     olympiad = data.get("current_olympiad", {})
     olympiad["prize"] = prize
-
     app = await get_application(callback.from_user.id)
     olympiads = list(app.olympiads or [])
     olympiads.append(olympiad)
     await update_application(callback.from_user.id, olympiads=olympiads, funnel_stage="olympiads_done")
-
     count = len(olympiads)
     if count >= MAX_OLYMPIADS:
         await callback.message.edit_text(f"✅ Олимпиада добавлена (достигнут лимит {MAX_OLYMPIADS}).")
@@ -789,24 +675,16 @@ async def process_olympiad_prize(callback: CallbackQuery, state: FSMContext):
         )
         await state.set_state(EducationState.olympiad_loop)
     await callback.answer()
-
-
 @router.callback_query(EducationState.olympiad_loop, F.data == "add_more")
 async def olympiad_add_more(callback: CallbackQuery, state: FSMContext):
     await callback.message.edit_text("Напиши предмет следующей олимпиады.")
     await state.set_state(EducationState.olympiad_subject)
     await callback.answer()
-
-
 @router.callback_query(EducationState.olympiad_loop, F.data == "continue")
 async def olympiad_done(callback: CallbackQuery, state: FSMContext):
     await callback.message.edit_text("Олимпиады записаны ✅")
     await ask_courses(callback.message, state)
     await callback.answer()
-
-
-# ── Courses ──
-
 async def ask_courses(message: Message, state: FSMContext):
     await message.answer(
         "Проходил(а) ли ты онлайн-курсы или дополнительное обучение вне школы?\n"
@@ -814,8 +692,6 @@ async def ask_courses(message: Message, state: FSMContext):
         reply_markup=kb_yes_skip()
     )
     await state.set_state(EducationState.course_filter)
-
-
 @router.callback_query(EducationState.course_filter, F.data == "yes")
 async def course_yes(callback: CallbackQuery, state: FSMContext):
     await callback.message.edit_text(
@@ -823,22 +699,16 @@ async def course_yes(callback: CallbackQuery, state: FSMContext):
     )
     await state.set_state(EducationState.course_name)
     await callback.answer()
-
-
 @router.callback_query(EducationState.course_filter, F.data == "skip")
 async def course_skip(callback: CallbackQuery, state: FSMContext):
     await callback.message.edit_text("Курсы пропущены.")
     await start_experience_block(callback.message, state)
     await callback.answer()
-
-
 @router.message(EducationState.course_name)
 async def process_course_name(message: Message, state: FSMContext):
     await state.update_data(current_course={"name": message.text.strip()})
     await message.answer("Где проходил(а)? Напиши платформу или место.\nНапример: Stepik, Coursera, очно в школе")
     await state.set_state(EducationState.course_platform)
-
-
 @router.message(EducationState.course_platform)
 async def process_course_platform(message: Message, state: FSMContext):
     data = await state.get_data()
@@ -847,8 +717,6 @@ async def process_course_platform(message: Message, state: FSMContext):
     await state.update_data(current_course=course)
     await message.answer("В каком году?")
     await state.set_state(EducationState.course_year)
-
-
 @router.message(EducationState.course_year)
 async def process_course_year(message: Message, state: FSMContext):
     year = validate_year(message.text)
@@ -861,20 +729,16 @@ async def process_course_year(message: Message, state: FSMContext):
     await state.update_data(current_course=course)
     await message.answer("Ты завершил(а) этот курс?", reply_markup=kb_completed())
     await state.set_state(EducationState.course_completed)
-
-
 @router.callback_query(EducationState.course_completed, F.data.in_(["completed_yes", "completed_no"]))
 async def process_course_completed(callback: CallbackQuery, state: FSMContext):
     completed = callback.data == "completed_yes"
     data = await state.get_data()
     course = data.get("current_course", {})
     course["completed"] = completed
-
     app = await get_application(callback.from_user.id)
     courses = list(app.courses or [])
     courses.append(course)
     await update_application(callback.from_user.id, courses=courses, funnel_stage="cources_done")
-
     count = len(courses)
     if count >= MAX_COURSES:
         await callback.message.edit_text(f"✅ Курс добавлен (лимит {MAX_COURSES}).")
@@ -886,26 +750,16 @@ async def process_course_completed(callback: CallbackQuery, state: FSMContext):
         )
         await state.set_state(EducationState.course_loop)
     await callback.answer()
-
-
 @router.callback_query(EducationState.course_loop, F.data == "add_more")
 async def course_add_more(callback: CallbackQuery, state: FSMContext):
     await callback.message.edit_text("Название следующего курса?")
     await state.set_state(EducationState.course_name)
     await callback.answer()
-
-
 @router.callback_query(EducationState.course_loop, F.data == "continue")
 async def course_done(callback: CallbackQuery, state: FSMContext):
     await callback.message.edit_text("Курсы записаны ✅")
     await start_experience_block(callback.message, state)
     await callback.answer()
-
-
-# ──────────────────────────────────────────────
-# BLOCK 5 — Experience & Projects
-# ──────────────────────────────────────────────
-
 async def start_experience_block(message: Message, state: FSMContext):
     await message.answer(
         "*Блок 3 из 5 — Опыт и проекты*\n\n"
@@ -920,8 +774,6 @@ async def start_experience_block(message: Message, state: FSMContext):
         reply_markup=kb_yes_skip()
     )
     await state.set_state(ExperienceState.filter)
-
-
 @router.callback_query(ExperienceState.filter, F.data == "yes")
 async def experience_yes(callback: CallbackQuery, state: FSMContext):
     await callback.message.edit_text(
@@ -930,15 +782,11 @@ async def experience_yes(callback: CallbackQuery, state: FSMContext):
     )
     await state.set_state(ExperienceState.name)
     await callback.answer()
-
-
 @router.callback_query(ExperienceState.filter, F.data == "skip")
 async def experience_skip(callback: CallbackQuery, state: FSMContext):
     await callback.message.edit_text("Опыт пропущен.")
     await start_essay_block(callback.message, state)
     await callback.answer()
-
-
 @router.message(ExperienceState.name)
 async def process_project_name(message: Message, state: FSMContext):
     if not (2 <= len(message.text.strip()) <= 100):
@@ -947,8 +795,6 @@ async def process_project_name(message: Message, state: FSMContext):
     await state.update_data(current_project={"name": message.text.strip()})
     await message.answer("На что это больше всего похоже?", reply_markup=kb_project_type())
     await state.set_state(ExperienceState.type)
-
-
 @router.callback_query(ExperienceState.type, F.data.startswith("type_"))
 async def process_project_type(callback: CallbackQuery, state: FSMContext):
     ptype = callback.data.replace("type_", "")
@@ -959,8 +805,6 @@ async def process_project_type(callback: CallbackQuery, state: FSMContext):
     await callback.message.edit_text("В каком году это было (или началось)?")
     await state.set_state(ExperienceState.year)
     await callback.answer()
-
-
 @router.message(ExperienceState.year)
 async def process_project_year(message: Message, state: FSMContext):
     year = validate_year(message.text)
@@ -973,8 +817,6 @@ async def process_project_year(message: Message, state: FSMContext):
     await state.update_data(current_project=project)
     await message.answer("Какова была твоя роль?", reply_markup=kb_role())
     await state.set_state(ExperienceState.role)
-
-
 @router.callback_query(ExperienceState.role, F.data.startswith("role_"))
 async def process_project_role(callback: CallbackQuery, state: FSMContext):
     role = callback.data.replace("role_", "")
@@ -987,8 +829,6 @@ async def process_project_role(callback: CallbackQuery, state: FSMContext):
     )
     await state.set_state(ExperienceState.team_size)
     await callback.answer()
-
-
 @router.message(ExperienceState.team_size)
 async def process_team_size(message: Message, state: FSMContext):
     size = validate_team_size(message.text)
@@ -1005,8 +845,6 @@ async def process_team_size(message: Message, state: FSMContext):
         "Например: «Организовала 3 субботника, привлекла 40 волонтёров»"
     )
     await state.set_state(ExperienceState.description)
-
-
 @router.message(ExperienceState.description)
 async def process_project_description(message: Message, state: FSMContext):
     text = message.text.strip()
@@ -1022,23 +860,17 @@ async def process_project_description(message: Message, state: FSMContext):
         reply_markup=kb_failure()
     )
     await state.set_state(ExperienceState.failure_filter)
-
-
 @router.callback_query(ExperienceState.failure_filter, F.data == "failure_yes")
 async def project_failure_yes(callback: CallbackQuery, state: FSMContext):
     await callback.message.edit_text("Что случилось и что ты сделал(а)?\nНапиши коротко — 1–2 предложения.")
     await state.set_state(ExperienceState.failure_note)
     await callback.answer()
-
-
 @router.callback_query(ExperienceState.failure_filter, F.data == "failure_no")
 async def project_failure_no(callback: CallbackQuery, state: FSMContext):
     await save_project(callback.from_user.id, state, failure_note=None, continued=None)
     await callback.message.edit_text("Проект записан.")
     await ask_project_loop(callback.message, state)
     await callback.answer()
-
-
 @router.message(ExperienceState.failure_note)
 async def process_failure_note(message: Message, state: FSMContext):
     text = message.text.strip()
@@ -1051,8 +883,6 @@ async def process_failure_note(message: Message, state: FSMContext):
     await state.update_data(current_project=project)
     await message.answer("Ты продолжил(а) работу после этого?", reply_markup=kb_continued())
     await state.set_state(ExperienceState.continued)
-
-
 @router.callback_query(ExperienceState.continued, F.data.in_(["continued_yes", "continued_no"]))
 async def process_continued(callback: CallbackQuery, state: FSMContext):
     continued = callback.data == "continued_yes"
@@ -1066,8 +896,6 @@ async def process_continued(callback: CallbackQuery, state: FSMContext):
     await callback.message.edit_text("Проект записан ✅")
     await ask_project_loop(callback.message, state)
     await callback.answer()
-
-
 async def save_project(user_id: int, state: FSMContext, failure_note, continued):
     data = await state.get_data()
     project = data.get("current_project", {})
@@ -1079,8 +907,6 @@ async def save_project(user_id: int, state: FSMContext, failure_note, continued)
     projects = list(app.projects or [])
     projects.append(project)
     await update_application(user_id, projects=projects, funnel_stage="projects_done")
-
-
 async def ask_project_loop(message: Message, state: FSMContext):
     app = await get_application(message.chat.id)
     count = len(app.projects or [])
@@ -1093,8 +919,6 @@ async def ask_project_loop(message: Message, state: FSMContext):
             reply_markup=kb_add_more()
         )
         await state.set_state(ExperienceState.loop)
-
-
 @router.callback_query(ExperienceState.loop, F.data == "add_more")
 async def project_add_more(callback: CallbackQuery, state: FSMContext):
     await callback.message.edit_text(
@@ -1102,19 +926,11 @@ async def project_add_more(callback: CallbackQuery, state: FSMContext):
     )
     await state.set_state(ExperienceState.name)
     await callback.answer()
-
-
 @router.callback_query(ExperienceState.loop, F.data == "continue")
 async def project_done(callback: CallbackQuery, state: FSMContext):
     await callback.message.edit_text("Проекты записаны ✅")
     await start_essay_block(callback.message, state)
     await callback.answer()
-
-
-# ──────────────────────────────────────────────
-# BLOCK 6 — Essay
-# ──────────────────────────────────────────────
-
 async def start_essay_block(message: Message, state: FSMContext):
     await message.answer(
         "*Блок 4 из 5 — Эссе*\n\n"
@@ -1133,15 +949,12 @@ async def start_essay_block(message: Message, state: FSMContext):
         parse_mode="Markdown"
     )
     await state.set_state(EssayState.writing)
-
-
 @router.message(EssayState.writing)
 async def process_essay(message: Message, state: FSMContext):
     ok, wc, err = validate_essay(message.text)
     if not ok:
         await message.answer(f"❌ {err}\nПопробуй снова.")
         return
-
     essay_text = message.text.strip()
     await update_application(
         message.from_user.id,
@@ -1149,9 +962,6 @@ async def process_essay(message: Message, state: FSMContext):
         essay_word_count=wc,
         funnel_stage="essay_done"
     )
-
-    # Run NLP analysis once, immediately after essay submission.
-    # Result is stored in DB — never recomputed later.
     try:
         import sys, os
         sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
@@ -1159,26 +969,15 @@ async def process_essay(message: Message, state: FSMContext):
         nlp_result = await asyncio.get_event_loop().run_in_executor(
             None, analyze_essay, essay_text
         )
-        essay_nlp = nlp_result["scores"]  # dict with model_the_way, ..., overall (0–10 scale)
+        essay_nlp = nlp_result["scores"]
         await update_application(message.from_user.id, essay_nlp=essay_nlp)
     except Exception as e:
         logger.error(f"NLP essay analysis failed for user {message.from_user.id}: {e}")
-        # Do not block the candidate — NLP failure is non-fatal at collection stage.
-        # The scoring pipeline will raise if essay_nlp is missing.
-
     await message.answer(f"✅ Эссе принято — {wc} слов. Отличная работа!")
     await start_scenarios(message, state)
-
-
-# ──────────────────────────────────────────────
-# BLOCK 7 — Scenarios (full branching 25-question tree)
-# ──────────────────────────────────────────────
-
 def get_progress_bar(seconds_left: int, total: int) -> str:
     filled = round((seconds_left / total) * 10)
     return "█" * filled + "░" * (10 - filled)
-
-
 async def start_scenarios(message: Message, state: FSMContext):
     await message.answer(
         "*Блок 5 из 5 — Сценарии*\n\n"
@@ -1197,37 +996,25 @@ async def start_scenarios(message: Message, state: FSMContext):
         choice_path=[],
         timer_violations=0
     )
-
-
 @router.callback_query(ScenarioState.intro, F.data == "scenario_go")
 async def scenario_go(callback: CallbackQuery, state: FSMContext, bot: Bot):
     await callback.message.edit_text("Начинаем! ⏱")
     await send_scenario_question(bot, callback.from_user.id, state)
     await callback.answer()
-
-
 async def send_scenario_question(bot: Bot, user_id: int, state: FSMContext, edit_message_id: int = None):
-    """
-    Принимает edit_message_id. Если он есть — редактирует старое сообщение.
-    Если нет — отправляет новое.
-    """
     data = await state.get_data()
     idx = data.get("scenario_idx", 0)
     phase = data.get("scenario_phase", "entry")
     sc_id = SCENARIO_ORDER[idx]
-
     q_text = get_question_text(sc_id, phase)
     markup = kb_scenario(sc_id, phase)
-
     sc_num = idx + 1
     phase_label = "Шаг 1 из 2" if phase == "entry" else "Шаг 2 из 2"
     header = f"*Сценарий {sc_num} из 5 — {phase_label}*\n\n"
-
     full_text = (
         f"⏱ ██████████ {SCENARIO_TIMER_SECONDS} сек\n\n"
         f"{header}{q_text}"
     )
-
     if edit_message_id:
         try:
             sent = await bot.edit_message_text(
@@ -1241,10 +1028,8 @@ async def send_scenario_question(bot: Bot, user_id: int, state: FSMContext, edit
             sent = await bot.send_message(user_id, full_text, reply_markup=markup, parse_mode="Markdown")
     else:
         sent = await bot.send_message(user_id, full_text, reply_markup=markup, parse_mode="Markdown")
-
     await state.set_state(ScenarioState.answering)
     current_q_key = f"{idx}_{phase}"
-
     asyncio.create_task(
         scenario_timer(
             bot=bot,
@@ -1257,7 +1042,6 @@ async def send_scenario_question(bot: Bot, user_id: int, state: FSMContext, edit
             q_key=current_q_key
         )
     )
-
 async def scenario_timer(
     bot: Bot,
     user_id: int,
@@ -1269,19 +1053,14 @@ async def scenario_timer(
     q_key: str
 ):
     seconds = SCENARIO_TIMER_SECONDS
-
     while seconds > 0:
         await asyncio.sleep(1)
-
         data = await state.get_data()
         current_state = await state.get_state()
         active_q_key = f"{data.get('scenario_idx')}_{data.get('scenario_phase')}"
-
         if current_state != ScenarioState.answering.state or active_q_key != q_key:
-            return  # Выходим, если пользователь уже ответил или перешел к след. вопросу
-
+            return
         seconds -= 1
-
         if seconds % 2 == 0 or seconds <= 5:
             bar = get_progress_bar(seconds, SCENARIO_TIMER_SECONDS)
             try:
@@ -1294,41 +1073,31 @@ async def scenario_timer(
                 )
             except TelegramBadRequest:
                 pass
-
-    # Время вышло
     current_state = await state.get_state()
     data = await state.get_data()
     active_q_key = f"{data.get('scenario_idx')}_{data.get('scenario_phase')}"
-    
     if current_state == ScenarioState.answering.state and active_q_key == q_key:
         violations = data.get("timer_violations", 0) + 1
         await state.update_data(timer_violations=violations)
-
         try:
             await bot.edit_message_reply_markup(chat_id=user_id, message_id=msg_id, reply_markup=None)
         except TelegramBadRequest:
             pass
-
         await bot.send_message(user_id, "⏰ Время вышло! Переходим дальше.")
         await advance_scenario(bot, user_id, state, chosen_letter=None, msg_id=msg_id)
-
 @router.callback_query(ScenarioState.answering, F.data.startswith("ans_"))
 async def scenario_answer(callback: CallbackQuery, state: FSMContext, bot: Bot):
     parts = callback.data.split("_")
-    chosen_letter = parts[-1] 
-
+    chosen_letter = parts[-1]
     await advance_scenario(bot, callback.from_user.id, state, chosen_letter=chosen_letter, msg_id=callback.message.message_id)
     await callback.answer()
-
 async def advance_scenario(bot: Bot, user_id: int, state: FSMContext, chosen_letter: str | None, msg_id: int):
     data = await state.get_data()
     idx = data.get("scenario_idx", 0)
     phase = data.get("scenario_phase", "entry")
     choice_path = data.get("choice_path", [])
-
     letter = chosen_letter if chosen_letter else "T"
     choice_path.append(letter)
-
     if phase == "entry":
         branch_key = chosen_letter if chosen_letter else "A"
         await state.update_data(
@@ -1337,11 +1106,9 @@ async def advance_scenario(bot: Bot, user_id: int, state: FSMContext, chosen_let
             scenario_entry_choice=branch_key
         )
         await send_scenario_question(bot, user_id, state, edit_message_id=msg_id)
-
     else:
         next_idx = idx + 1
         await state.update_data(choice_path=choice_path)
-
         if next_idx < len(SCENARIO_ORDER):
             await state.update_data(
                 scenario_idx=next_idx,
@@ -1355,16 +1122,12 @@ async def advance_scenario(bot: Bot, user_id: int, state: FSMContext, chosen_let
             except:
                 pass
             await finish_scenarios(bot, user_id, state)
-
-
 async def finish_scenarios(bot: Bot, user_id: int, state: FSMContext):
     data = await state.get_data()
     choice_path = data.get("choice_path", [])
     violations = data.get("timer_violations", 0)
-
     fingerprint = compute_fingerprint(choice_path)
     reliable = violations <= 2
-
     await update_application(
         user_id,
         scenario_choices={"choices": choice_path},
@@ -1373,20 +1136,12 @@ async def finish_scenarios(bot: Bot, user_id: int, state: FSMContext):
         timer_violations=violations,
         funnel_stage="scenarios_done"
     )
-
     text = "✅ Сценарии завершены!\n\n"
     if not reliable:
         text += "⚠️ Некоторые ответы не засчитаны из-за таймера.\n\n"
     text += "Последний шаг — можешь прикрепить материалы."
-
     await bot.send_message(user_id, text)
     await ask_file_upload(bot, user_id, state)
-
-
-# ──────────────────────────────────────────────
-# BLOCK 8 — File Upload
-# ──────────────────────────────────────────────
-
 async def ask_file_upload(bot: Bot, user_id: int, state: FSMContext):
     await bot.send_message(
         user_id,
@@ -1398,8 +1153,6 @@ async def ask_file_upload(bot: Bot, user_id: int, state: FSMContext):
         parse_mode="Markdown"
     )
     await state.set_state(FileUploadState.waiting)
-
-
 @router.callback_query(FileUploadState.waiting, F.data == "upload_file")
 async def upload_file_prompt(callback: CallbackQuery, state: FSMContext):
     await callback.message.edit_text(
@@ -1407,15 +1160,11 @@ async def upload_file_prompt(callback: CallbackQuery, state: FSMContext):
         "Когда закончишь — нажми /done или напиши «готово»."
     )
     await callback.answer()
-
-
 @router.callback_query(FileUploadState.waiting, F.data == "skip_upload")
 async def skip_upload(callback: CallbackQuery, state: FSMContext):
     await callback.message.edit_text("Файлы пропущены.")
     await finalize_application(callback.message, state, callback.from_user.id)
     await callback.answer()
-
-
 @router.message(FileUploadState.waiting, F.document | F.photo | F.video)
 async def handle_file_upload(message: Message, state: FSMContext):
     file_info = {}
@@ -1441,26 +1190,17 @@ async def handle_file_upload(message: Message, state: FSMContext):
             "file_name": message.video.file_name,
             "file_size": message.video.file_size,
         }
-
     app = await get_application(message.from_user.id)
     files = list(app.uploaded_files or [])
     files.append(file_info)
     await update_application(message.from_user.id, uploaded_files=files)
-    await message.answer(f"✅ Файл #{len(files)} получен. Отправь ещё или напиши /done")
-
-
+    await message.answer(f"✅ Файл
 @router.message(FileUploadState.waiting, F.text.lower().in_(["готово", "done", "/done"]))
 @router.message(Command("done"))
 async def files_done(message: Message, state: FSMContext):
     current = await state.get_state()
     if current == FileUploadState.waiting.state:
         await finalize_application(message, state, message.from_user.id)
-
-
-# ──────────────────────────────────────────────
-# BLOCK 9 — Finalize
-# ──────────────────────────────────────────────
-
 async def finalize_application(message: Message, state: FSMContext, user_id: int):
     await update_application(user_id, funnel_stage="submitted")
     app = await get_application(user_id)
@@ -1470,7 +1210,6 @@ async def finalize_application(message: Message, state: FSMContext, user_id: int
             logger.info(f"JSON saved for user {user_id}: {path}")
         except Exception as e:
             logger.error(f"Error saving JSON: {e}")
-
     summary = build_summary(app)
     await message.answer(
         "🎉 *Заявка успешно отправлена!*\n\n"
@@ -1479,12 +1218,6 @@ async def finalize_application(message: Message, state: FSMContext, user_id: int
         parse_mode="Markdown"
     )
     await state.clear()
-
-
-# ──────────────────────────────────────────────
-# Admin: /status
-# ──────────────────────────────────────────────
-
 @router.message(Command("status"))
 async def cmd_status(message: Message):
     app = await get_application(message.from_user.id)

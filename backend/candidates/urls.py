@@ -1,6 +1,3 @@
-"""
-urls.py — Маршруты API.
-"""
 from django.urls import path
 from . import views
 urlpatterns = [

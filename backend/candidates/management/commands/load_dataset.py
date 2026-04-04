@@ -1,7 +1,3 @@
-"""
-Management command to load candidates from the synthetic dataset.
-Usage: python manage.py load_dataset [--path <path_to_json>]
-"""
 import json
 from django.core.management.base import BaseCommand
 from django.conf import settings

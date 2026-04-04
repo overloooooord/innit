@@ -1,17 +1,3 @@
-"""
-telegram_service.py — Отправка уведомлений в Telegram.
-Как это работает:
-  1. При новой заявке вызывается notify_new_application(application)
-  2. Функция берёт TELEGRAM_BOT_TOKEN и TELEGRAM_CHAT_IDS из settings (= из .env)
-  3. Отправляет сообщение в каждый chat_id через Telegram Bot API
-  4. Если token не настроен — просто логирует предупреждение
-Chat IDs настраиваются в .env:
-  TELEGRAM_CHAT_IDS=8011349874,1262791177,1255137807
-Как получить chat_id:
-  1. Напиши своему боту /start
-  2. Открой https://api.telegram.org/bot<TOKEN>/getUpdates
-  3. Найди "chat": {"id": 123456789}
-"""
 import urllib.request
 import urllib.parse
 import json
@@ -19,10 +5,6 @@ import logging
 from django.conf import settings
 logger = logging.getLogger('candidates')
 def notify_new_application(application):
-    """
-    Отправить Telegram-уведомление о новой заявке.
-    Вызывается из views.py → application_list_create() после сохранения.
-    """
     token = getattr(settings, 'TELEGRAM_BOT_TOKEN', '')
     chat_ids = getattr(settings, 'TELEGRAM_CHAT_IDS', [])
     if not token or token == 'YOUR_BOT_TOKEN_HERE':
@@ -53,10 +35,6 @@ def notify_new_application(application):
         except Exception as e:
             logger.error(f"Ошибка отправки Telegram в chat {chat_id}: {e}")
 def notify_new_candidate(candidate):
-    """
-    Отправить уведомление о новом кандидате (для ML pipeline).
-    Обратная совместимость со старым кодом.
-    """
     token = getattr(settings, 'TELEGRAM_BOT_TOKEN', '')
     chat_ids = getattr(settings, 'TELEGRAM_CHAT_IDS', [])
     if not token or token == 'YOUR_BOT_TOKEN_HERE' or not chat_ids:
@@ -80,17 +58,12 @@ def notify_new_candidate(candidate):
         except Exception as e:
             logger.error(f"Failed to send Telegram to {chat_id}: {e}")
 def _escape_md(text: str) -> str:
-    """Экранировать спецсимволы Markdown для Telegram."""
     if not text:
         return '—'
     for char in ('_', '*', '[', ']', '(', ')', '~', '`', '>', '
         text = text.replace(char, f'\\{char}')
     return text
 def _send_message(token: str, chat_id: int, text: str):
-    """
-    Отправить сообщение через Telegram Bot API.
-    Используем urllib (без внешних зависимостей).
-    """
     url = f"https://api.telegram.org/bot{token}/sendMessage"
     data = urllib.parse.urlencode({
         'chat_id': chat_id,

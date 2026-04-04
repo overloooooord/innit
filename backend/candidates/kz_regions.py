@@ -1,11 +1,3 @@
-"""
-Город → Регион маппинг для Казахстана.
-Используется для серверной валидации: регион ДОЛЖЕН соответствовать городу.
-Как это работает:
-  1. Фронт загружает список городов через GET /api/cities/
-  2. При выборе города фронт запрашивает GET /api/cities/<city>/regions/
-  3. При отправке заявки backend проверяет через validate_city_region()
-"""
 CITY_REGION_MAP = {
     "Астана": "город Астана",
     "Алматы": "город Алматы",
@@ -88,19 +80,12 @@ LANGUAGES_CHOICES = [
     "Другой",
 ]
 def get_all_cities():
-    """Вернуть отсортированный список всех городов."""
     return sorted(set(CITY_REGION_MAP.keys()))
 def get_regions_for_city(city: str):
-    """Вернуть регион для указанного города. None если город не найден."""
     return CITY_REGION_MAP.get(city)
 def get_all_regions():
-    """Вернуть отсортированный список всех уникальных регионов."""
     return sorted(set(CITY_REGION_MAP.values()))
 def validate_city_region(city: str, region: str) -> bool:
-    """
-    Проверить что город существует и регион ему соответствует.
-    Возвращает True если валидно, False если нет.
-    """
     expected = CITY_REGION_MAP.get(city)
     if expected is None:
         return False

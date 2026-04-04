@@ -29,15 +29,6 @@ logger = logging.getLogger('candidates')
 app_logger = logging.getLogger('candidates.applications')
 @api_view(['GET', 'POST'])
 def application_list_create(request):
-    """
-    GET  /api/applications/ — список всех заявок (с фильтрами и пагинацией)
-    POST /api/applications/ — создать новую заявку
-    Фильтры (query params):
-      ?city=Алматы — по городу
-      ?language=Казахский — по языку
-      ?status=new — по статусу
-      ?search=Иванов — поиск по имени
-    """
     if request.method == 'POST':
         serializer = ApplicationSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -78,11 +69,6 @@ def application_list_create(request):
     return paginator.get_paginated_response(serializer.data)
 @api_view(['GET', 'PUT', 'DELETE'])
 def application_detail(request, pk):
-    """
-    GET    /api/applications/<id>/ — детали заявки
-    PUT    /api/applications/<id>/ — обновить заявку
-    DELETE /api/applications/<id>/ — удалить заявку
-    """
     try:
         application = Application.objects.get(pk=pk)
     except Application.DoesNotExist:
@@ -108,20 +94,12 @@ def application_detail(request, pk):
         )
 @api_view(['GET'])
 def city_list(request):
-    """
-    GET /api/cities/ — список всех городов Казахстана.
-    Фронт использует это для dropdown.
-    """
     return Response({
         'cities': get_all_cities(),
         'languages': LANGUAGES_CHOICES,
     })
 @api_view(['GET'])
 def city_regions(request, city):
-    """
-    GET /api/cities/<city>/regions/ — регион для указанного города.
-    Пример: GET /api/cities/Алматы/regions/ → {"region": "город Алматы"}
-    """
     region = get_regions_for_city(city)
     if region is None:
         return Response(
@@ -131,17 +109,6 @@ def city_regions(request, city):
     return Response({'city': city, 'region': region})
 @api_view(['POST'])
 def admin_login(request):
-    """
-    POST /api/admin/login/ — авторизация админа.
-    JSON: {"username": "era", "password": "admin1"}
-    Как работает:
-      1. Проверяем username == settings.PANEL_USERNAME
-      2. Проверяем password через bcrypt.checkpw() vs settings.PANEL_PASSWORD_HASH
-      3. Если правильно → сохраняем сессию
-    Пароль НИКОГДА не хранится в открытом виде.
-    Хеш генерируется командой:
-      python -c "import bcrypt; print(bcrypt.hashpw(b'admin1', bcrypt.gensalt()).decode())"
-    """
     serializer = AdminLoginSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
     username = serializer.validated_data['username']
@@ -192,7 +159,6 @@ def admin_applications(request):
         logger.error(f"Ошибка БД: {e}")
         return Response({'error': str(e)}, status=500)
 def _load_from_bot_db(search, funnel, scored):
-    """Load from BotApplication (Supabase). Raises on connection error."""
     qs = BotApplication.objects.using('bot_db').all()
     if search:
         qs = qs.filter(
@@ -261,7 +227,6 @@ def _load_from_local_db(search):
         })
     return results
 def _serialize_bot_app(app):
-    """Serialize BotApplication to JSON dict for the admin panel."""
     fp = app.fingerprint_display or {}
     return {
         'id': app.id,
@@ -298,10 +263,6 @@ def _serialize_bot_app(app):
     }
 @api_view(['POST'])
 def admin_score_application(request, pk):
-    """
-    POST /api/admin/applications/<id>/score/ — оценить заявку через ML pipeline.
-    Пытается: BotApplication (Supabase) → fallback Application (local).
-    """
     if not request.session.get('panel_auth'):
         return Response({'error': 'Не авторизован'}, status=status.HTTP_403_FORBIDDEN)
     app = None
@@ -361,10 +322,6 @@ def admin_score_application(request, pk):
         return Response({'error': f'Ошибка скоринга: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 @api_view(['POST'])
 def admin_score_all_applications(request):
-    """
-    POST /api/admin/applications/score-all/ — оценить все неоценённые заявки.
-    Пытается: BotApplication (Supabase) → fallback Application (local).
-    """
     if not request.session.get('panel_auth'):
         return Response({'error': 'Не авторизован'}, status=status.HTTP_403_FORBIDDEN)
     from datetime import datetime
@@ -435,10 +392,6 @@ def admin_score_all_applications(request):
     return Response(resp)
 @api_view(['GET', 'POST'])
 def candidate_list_create(request):
-    """
-    GET:  List all candidates with sorting, filtering, pagination.
-    POST: Register a new candidate.
-    """
     if request.method == 'POST':
         serializer = CandidateRegisterSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -481,7 +434,6 @@ def candidate_list_create(request):
     return paginator.get_paginated_response(serializer.data)
 @api_view(['GET'])
 def candidate_detail(request, pk):
-    """Get full details of a candidate including scoring result."""
     try:
         candidate = Candidate.objects.select_related('scoring').get(pk=pk)
     except Candidate.DoesNotExist:
@@ -493,7 +445,6 @@ def candidate_detail(request, pk):
     return Response(serializer.data)
 @api_view(['GET'])
 def candidate_search(request):
-    """Search candidates by name, city, or region."""
     q = request.query_params.get('q', '').strip()
     if not q:
         return Response({'results': []})
@@ -506,7 +457,6 @@ def candidate_search(request):
     return Response({'results': serializer.data})
 @api_view(['POST'])
 def candidate_score(request, pk):
-    """Run ML scoring for a candidate."""
     try:
         candidate = Candidate.objects.get(pk=pk)
     except Candidate.DoesNotExist:
@@ -539,7 +489,6 @@ def candidate_score(request, pk):
         )
 @api_view(['GET'])
 def candidate_ranking(request):
-    """Get all scored candidates ranked by shortlist probability."""
     scored = ScoringResult.objects.select_related('candidate').all()
     results = []
     for sr in scored:
@@ -559,7 +508,6 @@ def candidate_ranking(request):
     return Response({'results': results})
 @api_view(['POST'])
 def score_all(request):
-    """Score all candidates that haven't been scored yet."""
     unscored = Candidate.objects.filter(scoring__isnull=True)
     count = unscored.count()
     if count == 0:
@@ -590,11 +538,6 @@ def score_all(request):
         )
 @api_view(['GET', 'POST'])
 def teacher_nominations(request):
-    """
-    GET  /api/teacher/nominations/ — список рекомендаций текущего учителя
-    POST /api/teacher/nominations/ — добавить рекомендацию ученика
-    Требует session['teacher_auth'].
-    """
     teacher_login = request.session.get('teacher_auth')
     if not teacher_login:
         return Response({'error': 'Не авторизован'}, status=status.HTTP_403_FORBIDDEN)

@@ -1,18 +1,6 @@
-"""
-models.py — Модели базы данных.
-Что здесь:
-  - Candidate — старая модель для ML pipeline (не трогаем)
-  - ScoringResult — результат ML оценки (не трогаем)
-  - Application — НОВАЯ модель для заявок пользователей
-  - MBTITestResult — результаты MBTI теста
-  - LanguageTestResult — результаты языкового теста (с таймером и violation_count)
-Все модели используют Django ORM → полная защита от SQL-инъекций.
-Пароли хранятся как bcrypt-хеши (не в этих моделях, а в settings).
-"""
 from django.db import models
 import uuid
 class Candidate(models.Model):
-    """Candidate profile for InVision U (ML pipeline)."""
     name = models.CharField('ФИО', max_length=200)
     age = models.IntegerField('Возраст')
     city = models.CharField('Город', max_length=100, blank=True, default='')
@@ -29,14 +17,6 @@ class Candidate(models.Model):
     def __str__(self):
         return f"{self.name} ({self.city})"
     def to_pipeline_dict(self):
-        """Convert to the dict format expected by pipeline/scorer.py
-        Origin pipeline expects:
-          - candidate["essay"]         → string or {"text": str} for NLP
-          - candidate["bot_metadata"]  → dict for SLPI radar (optional)
-          - candidate["personal"]      → personal info
-          - candidate["education"]     → education data
-          - candidate["experience"]    → experience data
-        """
         data = self.profile_data.copy()
         data['id'] = str(self.id)
         data['personal'] = {
@@ -55,7 +35,6 @@ class Candidate(models.Model):
             data['bot_metadata'] = {}
         return data
 class ScoringResult(models.Model):
-    """ML scoring result for a candidate."""
     candidate = models.OneToOneField(
         Candidate,
         on_delete=models.CASCADE,
@@ -73,11 +52,6 @@ class ScoringResult(models.Model):
     def __str__(self):
         return f"{self.candidate.name}: {self.prediction} ({self.confidence:.0%})"
 class Application(models.Model):
-    """
-    Заявка пользователя — схема совпадает с БД бота.
-    Все поля зеркалируют bot/database.py → applications table.
-    + scoring_result хранит результат ML pipeline.
-    """
     STATUS_CHOICES = [
         ('new', 'Новая'),
         ('in_review', 'На рассмотрении'),
@@ -120,10 +94,6 @@ class Application(models.Model):
     def __str__(self):
         return f"
 class BotApplication(models.Model):
-    """
-    Unmanaged model mapped to the Telegram bot's `applications` table in Supabase.
-    Django does NOT create/migrate this table — it already exists.
-    """
     telegram_id = models.BigIntegerField(unique=True)
     telegram_username = models.CharField(max_length=100, null=True, blank=True)
     funnel_stage = models.CharField(max_length=50, default='started')
@@ -167,10 +137,6 @@ class BotApplication(models.Model):
     def __str__(self):
         return f"{self.name or '—'} (tg:{self.telegram_id})"
     def to_pipeline_dict(self):
-        """
-        Convert to the dict format expected by pipeline/scorer.py.
-        Matches data/candidate_scheme.json exactly.
-        """
         olympiads = self.olympiads or []
         courses = self.courses or []
         projects = self.projects or []

@@ -1,7 +1,3 @@
-"""
-Django settings for invision project.
-Все секреты загружаются из .env файла через python-decouple.
-"""
 import os
 from pathlib import Path
 from decouple import config, Csv
