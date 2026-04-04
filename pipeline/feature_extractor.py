@@ -11,10 +11,11 @@ from config import (
 
 
 def extract_features(candidate: Dict[str, Any]) -> np.ndarray:
-    """Returns 23-dim vector: 18 structural + 5 SLPI."""
+    """Returns 31-dim vector: 20 structural + 5 SLPI + 6 essay NLP."""
     structural = extract_structural_features(candidate)
     slpi       = extract_slpi_features(candidate)
-    return np.concatenate([structural, slpi]).astype(np.float32)
+    essay      = extract_essay_features(candidate)
+    return np.concatenate([structural, slpi, essay]).astype(np.float32)
 
 
 def extract_features_dict(candidate: Dict[str, Any]) -> Dict[str, float]:
@@ -23,7 +24,7 @@ def extract_features_dict(candidate: Dict[str, Any]) -> Dict[str, float]:
 
 
 def extract_structural_features(candidate: Dict[str, Any]) -> np.ndarray:
-    """Returns 18-dim structural feature vector. Used by ThreeStageScorer stage 1."""
+    """Returns 20-dim structural feature vector. Used by ThreeStageScorer stage 1."""
     features = _build_feature_dict(candidate)
     return np.array([features[name] for name in STRUCTURED_FEATURES], dtype=np.float32)
 
@@ -45,11 +46,29 @@ def extract_slpi_features(candidate: Dict[str, Any]) -> np.ndarray:
 
 
 def extract_essay_features(candidate: Dict[str, Any]) -> np.ndarray:
-    """Returns 6-dim essay NLP feature vector (zero-shot SLPI + overall). Delegates to nlp.nlp_model."""
-    import sys, os
-    sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
-    from nlp.nlp_model import extract_essay_features as _nlp_extract
-    return _nlp_extract(candidate)
+    """
+    Returns 6-dim essay NLP feature vector (0–1 scale).
+    Reads pre-computed scores from candidate["bot_metadata"]["essay_nlp"].
+    NLP is run once in the Telegram bot immediately after essay submission — never here.
+
+    Raises KeyError if essay_nlp is missing: a candidate without NLP scores
+    should not reach the scoring pipeline.
+    """
+    nlp = candidate.get("bot_metadata", {}).get("essay_nlp")
+    if nlp is None:
+        raise KeyError(
+            f"candidate {candidate.get('user_id', '?')} has no bot_metadata.essay_nlp — "
+            "NLP must be computed in the bot before scoring"
+        )
+    # Scores stored as 0–10; normalize to 0–1 for the model
+    return np.array([
+        nlp["model_the_way"]         / 10.0,
+        nlp["inspire_shared_vision"] / 10.0,
+        nlp["challenge_the_process"] / 10.0,
+        nlp["enable_others_to_act"]  / 10.0,
+        nlp["encourage_the_heart"]   / 10.0,
+        nlp["overall"]               / 10.0,
+    ], dtype=np.float32)
 
 
 def extract_batch(candidates: List[Dict[str, Any]]) -> np.ndarray:
@@ -63,8 +82,10 @@ def _build_feature_dict(candidate: dict) -> Dict[str, float]:
     projects  = candidate.get("experience", {}).get("projects", [])
 
     return {
-        # Education (7)
+        # Education (9)
         "f_gpa":                          _f_gpa(edu),
+        "f_ent_score":                    _f_ent_score(edu),
+        "f_ielts_score":                  _f_ielts_score(edu),
         "f_olympiad_count":               float(len(olympiads)),
         "f_olympiad_max_level":           _f_olympiad_max_level(olympiads),
         "f_olympiad_has_prize":           _f_olympiad_has_prize(olympiads),
@@ -91,6 +112,18 @@ def _build_feature_dict(candidate: dict) -> Dict[str, float]:
 
 def _f_gpa(edu: dict) -> float:
     return float(np.clip(edu.get("gpa", 0.0), 0.0, 5.0))
+
+
+def _f_ent_score(edu: dict) -> float:
+    """ENT score normalized to 0–1. null/0 → 0.0 (not penalized)."""
+    score = edu.get("ent_score") or 0
+    return float(np.clip(score, 0, 140) / 140)
+
+
+def _f_ielts_score(edu: dict) -> float:
+    """IELTS band normalized to 0–1. null/0 → 0.0 (not penalized)."""
+    score = edu.get("ielts_score") or 0
+    return float(np.clip(score, 0, 9) / 9)
 
 
 def _f_olympiad_max_level(olympiads: list) -> float:

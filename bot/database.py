@@ -47,8 +47,8 @@ class Application(Base):
     languages: Mapped[list[str] | None] = mapped_column(JSON, default=[])
 
     # IELTS / ENT
-    ielts_score: Mapped[str | None] = mapped_column(String(20))
-    ent_score: Mapped[str | None] = mapped_column(String(20))
+    ielts_score: Mapped[float | None] = mapped_column(Float)
+    ent_score: Mapped[int | None] = mapped_column(Integer)
 
     # education arrays (JSON)
     olympiads: Mapped[dict | None] = mapped_column(JSON, default=list)
@@ -60,6 +60,7 @@ class Application(Base):
     # essay
     essay_text: Mapped[str | None] = mapped_column(Text)
     essay_word_count: Mapped[int | None] = mapped_column(Integer)
+    essay_nlp: Mapped[dict | None] = mapped_column(JSON)  # computed once by nlp_model after essay submission
 
     # scenarios / fingerprint
     scenario_choices: Mapped[dict | None] = mapped_column(JSON, default=dict)
