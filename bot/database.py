@@ -10,9 +10,11 @@ import json
 
 engine = create_async_engine(
     DATABASE_URL, 
-    echo=True,
+    # echo=True, для хоста
+    echo=False,
     json_serializer=lambda obj: json.dumps(obj, ensure_ascii=False),
-    connect_args = {"ssl": "require"})
+    # connect_args = {"ssl": "require"} для хоста
+    )
 async_session = async_sessionmaker(engine, expire_on_commit=False)
 
 
@@ -41,7 +43,6 @@ class Application(Base):
 
     # education
     school_type: Mapped[str | None] = mapped_column(String(50))
-    gpa_raw: Mapped[str | None] = mapped_column(String(50))
     gpa: Mapped[float | None] = mapped_column(Float)
     languages: Mapped[list[str] | None] = mapped_column(JSON, default=[])
 

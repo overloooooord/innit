@@ -449,7 +449,7 @@ async def cmd_start(message: Message, state: FSMContext):
 async def about_invision(callback: CallbackQuery):
     await callback.message.edit_text(
         "*InVision U* — образовательная программа от inDrive\n"
-        "для молодых людей 16–22 лет из Казахстана.\n\n"
+        "для молодых людей 16–25 лет из Казахстана.\n\n"
         "✦ Полный грант: обучение, проживание, менторы\n"
         "✦ Отбор по потенциалу, а не по оценкам\n"
         "✦ Фокус: лидерство, предпринимательство, социальные изменения",
@@ -582,8 +582,8 @@ async def ask_gpa(message: Message, state: FSMContext):
     await message.answer(
         "*Блок 2 из 5 — Образование*\n\n"
         "Какой у тебя средний балл за последний учебный год?\n\n"
-        "Казахстанская система: напиши число от 1 до 5. Например: 4.2\n"
-        "Если другая система — сконвертируй в Казахстанскую систему.",
+        "Укажите его по казахстанской системе оценивания — числом от 1 до 5 (например: 4.2).\n"
+        "Если вы учились по другой системе (например, 100-балльная и т.д.), переведите свой средний балл в казахстанскую шкалу (от 1 до 5)",
         parse_mode="Markdown"
     )
     await state.set_state(EducationState.gpa)
@@ -591,12 +591,17 @@ async def ask_gpa(message: Message, state: FSMContext):
 
 @router.message(EducationState.gpa)
 async def process_gpa(message: Message, state: FSMContext):
-    raw = message.text.strip()
-    if len(raw) < 1 or len(raw) > 30:
-        await message.answer("Напиши средний балл числом. Например: 4.2 или 5")
-        return
-    gpa = extract_gpa(raw)
-    await update_application(message.from_user.id, gpa_raw=raw, gpa=gpa)
+    gpa_value = extract_gpa(message.text)
+
+    if gpa_value is None:
+        await message.answer(
+            "Ошибка! Введи средний балл числом от 1 до 5.\n"
+            "Пример: 4.2 или 5"
+        )
+        return  
+
+    await update_application(message.from_user.id, gpa=gpa_value)
+    
     await ask_ielts(message, state)
 
 
@@ -744,7 +749,7 @@ async def process_olympiad_subject(message: Message, state: FSMContext):
 async def process_olympiad_year(message: Message, state: FSMContext):
     year = validate_year(message.text)
     if year is None:
-        await message.answer("Введи год от 2018 до 2025. Например: 2023")
+        await message.answer("Введи год от 2018 до 2026. Например: 2023")
         return
     data = await state.get_data()
     olympiad = data.get("current_olympiad", {})
@@ -853,7 +858,7 @@ async def process_course_platform(message: Message, state: FSMContext):
 async def process_course_year(message: Message, state: FSMContext):
     year = validate_year(message.text)
     if year is None:
-        await message.answer("Введи год от 2018 до 2025.")
+        await message.answer("Введи год от 2018 до 2026.")
         return
     data = await state.get_data()
     course = data.get("current_course", {})
@@ -965,7 +970,7 @@ async def process_project_type(callback: CallbackQuery, state: FSMContext):
 async def process_project_year(message: Message, state: FSMContext):
     year = validate_year(message.text)
     if year is None:
-        await message.answer("Введи год от 2018 до 2025.")
+        await message.answer("Введи год от 2018 до 2026.")
         return
     data = await state.get_data()
     project = data.get("current_project", {})
@@ -1128,7 +1133,7 @@ async def start_essay_block(message: Message, state: FSMContext):
         "не «я всегда», а один день, одну ситуацию, одно решение.\n\n"
         "Что именно произошло? Что ты почувствовал(а) тогда?\n"
         "Что сделал(а) и чем это закончилось?\n\n"
-        "Напиши 150–300 слов — своими словами, без подготовки.\n"
+        "Напиши 70–300 слов — своими словами, без подготовки.\n"
         "*Черновик лучше идеального текста.*",
         parse_mode="Markdown"
     )
@@ -1309,6 +1314,27 @@ async def advance_scenario(bot: Bot, user_id: int, state: FSMContext, chosen_let
 
     letter = chosen_letter if chosen_letter else "T"
     choice_path.append(letter)
+
+
+    if chosen_letter == None:
+        next_idx = idx + 1
+        await state.update_data(choice_path=choice_path)
+
+        if next_idx < len(SCENARIO_ORDER):
+            await state.update_data(
+                scenario_idx=next_idx,
+                scenario_phase="entry",
+                scenario_entry_choice=None
+            )
+            await send_scenario_question(bot, user_id, state, edit_message_id=msg_id)
+        else:
+            try:
+                await bot.edit_message_reply_markup(chat_id=user_id, message_id=msg_id, reply_markup=None)
+            except:
+                pass
+            await finish_scenarios(bot, user_id, state)
+        return
+
 
     if phase == "entry":
         branch_key = chosen_letter if chosen_letter else "A"

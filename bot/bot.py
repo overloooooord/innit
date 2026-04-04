@@ -31,4 +31,3 @@ if __name__ == "__main__":
     # asyncio.run(init_db())
     asyncio.run(main())
     
-    print("Таблицы успешно созданы в Supabase!")
