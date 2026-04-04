@@ -237,3 +237,4 @@
 [2026-04-05 00:19:26,433] WARNING candidates — Неудачная попытка входа: username=teacher
 [2026-04-05 00:19:30,560] INFO candidates — Вход в кабинет учителя: teacher1 (Елена Николаевна)
 [2026-04-05 01:18:40,056] WARNING candidates — Telegram не настроен: TELEGRAM_BOT_TOKEN не указан в .env. Уведомление не отправлено.
+[2026-04-05 02:46:18,328] INFO candidates — Вход в админ-панель: admin

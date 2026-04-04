@@ -58,6 +58,7 @@
     </select>
     <select class="filter-select" id="sortBy" onchange="applySort()">
         <option value="">Сортировка</option>
+        <option value="ml_score_desc">↓ ML Скор (Общий)</option>
         <option value="confidence_desc">↓ Уверенность AI</option>
         <option value="gpa_desc">↓ GPA</option>
         <option value="name_asc">А–Я Имя</option>
@@ -178,7 +179,8 @@ function applyClientFilter(pred) {
 function applySort() {
     const sort = document.getElementById('sortBy').value;
     const apps = [...filteredApps];
-    if (sort === 'confidence_desc') apps.sort((a,b) => (b.score_confidence||0) - (a.score_confidence||0));
+    if (sort === 'ml_score_desc') apps.sort((a,b) => ((b.score_probabilities||{}).shortlist||0) - ((a.score_probabilities||{}).shortlist||0));
+    else if (sort === 'confidence_desc') apps.sort((a,b) => (b.score_confidence||0) - (a.score_confidence||0));
     else if (sort === 'gpa_desc') apps.sort((a,b) => (b.gpa||0) - (a.gpa||0));
     else if (sort === 'name_asc') apps.sort((a,b) => (a.name||'').localeCompare(b.name||''));
     renderCards(apps);
