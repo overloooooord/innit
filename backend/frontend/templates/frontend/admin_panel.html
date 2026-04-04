@@ -342,7 +342,7 @@ async function showDetail(id) {
                 <div style="margin-top:6px;display:flex;gap:6px;">${funnelBadge(c.funnel_stage)} ${predBadge(c)}</div>
             </div>
             <div style="display:flex;gap:8px;">
-                <button class="btn btn-sm btn-accent" onclick="scoreOne(${c.id})">🔄 Переоценить</button>
+                <button class="btn btn-sm btn-accent" onclick="scoreOne(${c.id}, this)">🔄 Переоценить</button>
                 <button class="btn btn-secondary btn-sm" onclick="closeModal()">✕</button>
             </div>
         </div>

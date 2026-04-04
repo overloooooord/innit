@@ -19,12 +19,6 @@ class CandidateScorer:
         self.model     = load_model(model_path or MODEL_PATH)
         self.explainer = CandidateExplainer(self.model, X_background)
     def score(self, candidate: Dict[str, Any]) -> Dict[str, Any]:
-        feature_vector = extract_features(candidate)
-        feature_dict   = extract_features_dict(candidate)
-        X             = feature_vector.reshape(1, -1)
-        probabilities = self.model.predict_proba(X)[0]
-        predicted_cls = int(np.argmax(probabilities))
-        confidence    = float(probabilities[predicted_cls])
         essay_nlp = None
         essay_raw = candidate.get("essay", "")
         essay_text = essay_raw.get("text", "") if isinstance(essay_raw, dict) else (essay_raw or "")
@@ -36,6 +30,19 @@ class CandidateScorer:
                 essay_nlp = get_essay_nlp_result(candidate)
             except Exception:
                 essay_nlp = None
+        
+        if essay_nlp is not None:
+            if "bot_metadata" not in candidate:
+                candidate["bot_metadata"] = {}
+            candidate["bot_metadata"]["essay_nlp"] = essay_nlp
+
+        feature_vector = extract_features(candidate)
+        feature_dict   = extract_features_dict(candidate)
+        X             = feature_vector.reshape(1, -1)
+        probabilities = self.model.predict_proba(X)[0]
+        predicted_cls = int(np.argmax(probabilities))
+        confidence    = float(probabilities[predicted_cls])
+        
         explanation = self.explainer.explain(feature_vector, predicted_cls)
         radar       = self._build_radar(candidate)
         flags       = self._build_flags(feature_dict, essay_nlp)
