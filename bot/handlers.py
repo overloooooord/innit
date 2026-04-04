@@ -1128,7 +1128,7 @@ async def start_essay_block(message: Message, state: FSMContext):
         "не «я всегда», а один день, одну ситуацию, одно решение.\n\n"
         "Что именно произошло? Что ты почувствовал(а) тогда?\n"
         "Что сделал(а) и чем это закончилось?\n\n"
-        "Напиши 150–300 слов — своими словами, без подготовки.\n"
+        "Напиши 70–150 слов — своими словами, без подготовки.\n"
         "*Черновик лучше идеального текста.*",
         parse_mode="Markdown"
     )
@@ -1141,12 +1141,31 @@ async def process_essay(message: Message, state: FSMContext):
     if not ok:
         await message.answer(f"❌ {err}\nПопробуй снова.")
         return
+
+    essay_text = message.text.strip()
     await update_application(
         message.from_user.id,
-        essay_text=message.text.strip(),
+        essay_text=essay_text,
         essay_word_count=wc,
         funnel_stage="essay_done"
     )
+
+    # Run NLP analysis once, immediately after essay submission.
+    # Result is stored in DB — never recomputed later.
+    try:
+        import sys, os
+        sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+        from nlp.nlp_model import analyze_essay
+        nlp_result = await asyncio.get_event_loop().run_in_executor(
+            None, analyze_essay, essay_text
+        )
+        essay_nlp = nlp_result["scores"]  # dict with model_the_way, ..., overall (0–10 scale)
+        await update_application(message.from_user.id, essay_nlp=essay_nlp)
+    except Exception as e:
+        logger.error(f"NLP essay analysis failed for user {message.from_user.id}: {e}")
+        # Do not block the candidate — NLP failure is non-fatal at collection stage.
+        # The scoring pipeline will raise if essay_nlp is missing.
+
     await message.answer(f"✅ Эссе принято — {wc} слов. Отличная работа!")
     await start_scenarios(message, state)
 

@@ -40,8 +40,10 @@ FINGERPRINT_SIZE = 500
 #   nomination_pre_score — inequality between nominated and self-applied candidates
 #   ai_detection_flag — shown to commission card, never enters model
 STRUCTURED_FEATURES = [
-    # Education (7)
+    # Education (9)
     "f_gpa",
+    "f_ent_score",
+    "f_ielts_score",
     "f_olympiad_count",
     "f_olympiad_max_level",
     "f_olympiad_has_prize",
@@ -64,18 +66,20 @@ STRUCTURED_FEATURES = [
 ]
 
 # Feature groups for ablation study
-# Layout: 0–17 structural, 18–22 SLPI (fingerprint_display), 23–28 essay NLP
+# Layout: 0–18 structural (9 edu + 5 exp + 6 traj), 19–23 SLPI, 24–29 essay NLP
 FEATURE_GROUPS = {
-    "Education":  [0, 1, 2, 3, 4, 5, 6],
-    "Experience": [7, 8, 9, 10, 11],
-    "Trajectory": [12, 13, 14, 15, 16, 17],
-    "SLPI":       [18, 19, 20, 21, 22],
-    "Essay":      [23, 24, 25, 26, 27, 28],
+    "Education":  [0, 1, 2, 3, 4, 5, 6, 7, 8],
+    "Experience": [9, 10, 11, 12, 13],
+    "Trajectory": [14, 15, 16, 17, 18, 19],
+    "SLPI":       [20, 21, 22, 23, 24],
+    "Essay":      [25, 26, 27, 28, 29, 30],
 }
 
 # Human-readable Russian descriptions for commission dashboard
 FEATURE_DESCRIPTIONS = {
     "f_gpa":                          "Средний балл (GPA)",
+    "f_ent_score":                    "Балл ЕНТ (0–140, норм. 0–1)",
+    "f_ielts_score":                  "Балл IELTS (0–9, норм. 0–1)",
     "f_olympiad_count":               "Количество олимпиад",
     "f_olympiad_max_level":           "Максимальный уровень олимпиады",
     "f_olympiad_has_prize":           "Наличие призового места",

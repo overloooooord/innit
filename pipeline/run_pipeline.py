@@ -169,6 +169,16 @@ def main():
             json.dump(result, f, indent=2, ensure_ascii=False)
         print(f"\n  Результат сохранён: {out_path}")
 
+        telegram_id = candidate.get("user_id")
+        if telegram_id:
+            try:
+                sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+                from data.db_writer import save_score_to_db
+                save_score_to_db(telegram_id=telegram_id, score_result=result)
+                print(f"  Результат записан в БД (telegram_id={telegram_id})")
+            except Exception as e:
+                print(f"  [WARN] Не удалось записать в БД: {e}")
+
     # ============================================================
     # Summary
     # ============================================================
