@@ -262,3 +262,6 @@
 [2026-04-05 03:48:26,133] ERROR candidates — Ошибка скоринга заявки #6: 'model_the_way'
 [2026-04-05 03:49:07,130] ERROR candidates — Ошибка скоринга заявки #6: 'model_the_way'
 [2026-04-05 03:49:13,783] ERROR candidates — Ошибка скоринга заявки #6: 'model_the_way'
+[2026-04-05 03:50:56,173] INFO candidates.ml_service — Loading ML model from /home/caterinw/Indrive-AI/pipeline/models/model.pkl
+[2026-04-05 03:50:58,284] INFO candidates.ml_service — ML model loaded successfully
+[2026-04-05 03:50:58,286] ERROR candidates — Ошибка скоринга заявки #6: Feature shape mismatch, expected: 23, got 31

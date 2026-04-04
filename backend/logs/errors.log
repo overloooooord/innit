@@ -503,3 +503,6 @@ django.db.utils.OperationalError: could not translate host name "db.ogbabrukutng
 [2026-04-05 03:49:13,783] ERROR candidates — Ошибка скоринга заявки #6: 'model_the_way'
 [2026-04-05 03:49:13,784] ERROR django.request — Internal Server Error: /api/admin/applications/6/score/
 [2026-04-05 03:49:13,785] ERROR django.server — "POST /api/admin/applications/6/score/ HTTP/1.1" 500 58
+[2026-04-05 03:50:58,286] ERROR candidates — Ошибка скоринга заявки #6: Feature shape mismatch, expected: 23, got 31
+[2026-04-05 03:50:58,286] ERROR django.request — Internal Server Error: /api/admin/applications/6/score/
+[2026-04-05 03:50:58,286] ERROR django.server — "POST /api/admin/applications/6/score/ HTTP/1.1" 500 87
